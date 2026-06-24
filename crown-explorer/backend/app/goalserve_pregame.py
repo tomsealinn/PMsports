@@ -477,7 +477,7 @@ class GoalservePregamePoller:
     def _fetch_url(self, url: str) -> bytes:
         req = urllib.request.Request(
             url,
-            headers={"User-Agent": "crown-gold/goalserve", "Accept-Encoding": "gzip"},
+            headers={"User-Agent": "pm-sports-goalserve/1.0", "Accept-Encoding": "gzip"},
         )
         try:
             with urllib.request.urlopen(req, timeout=GS_PREGAME_TIMEOUT) as resp:

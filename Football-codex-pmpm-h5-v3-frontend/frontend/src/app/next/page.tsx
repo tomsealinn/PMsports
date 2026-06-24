@@ -20,6 +20,8 @@ const C = {
   amber:       "#F59E0B",
 };
 
+const SPORTS_HREF = "/next/sports.html";
+
 /* ─── Static data ────────────────────────────────────────────────── */
 const STATS = [
   { value: "500+",   label: "覆盖联赛" },
@@ -126,7 +128,7 @@ function NavBar() {
         {/* Desktop links */}
         <div className="cg-nav-links" style={{ display: "flex", gap: 4, flex: 1 }}>
           {["滚球", "足球", "篮球", "早盘", "冠军"].map(label => (
-            <a key={label} href="/h5/sports.html"
+            <a key={label} href={SPORTS_HREF}
               style={{ padding: "6px 14px", borderRadius: "2rem", fontSize: "0.9rem", fontWeight: 500, color: C.textMid, textDecoration: "none", transition: "all 0.2s" }}
               className="cg-nav-link">
               {label}
@@ -136,12 +138,12 @@ function NavBar() {
 
         {/* CTA */}
         <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
-          <a href="/h5/sports.html"
+          <a href={SPORTS_HREF}
             className="cg-btn-outline"
             style={{ padding: "8px 20px", borderRadius: "2rem", fontSize: "0.875rem", fontWeight: 600, border: `1.5px solid ${C.blue}`, color: C.blue, textDecoration: "none", transition: "all 0.25s" }}>
             登录
           </a>
-          <a href="/h5/sports.html"
+          <a href={SPORTS_HREF}
             className="cg-btn-primary"
             style={{ padding: "8px 20px", borderRadius: "2rem", fontSize: "0.875rem", fontWeight: 600, background: C.blue, color: "#fff", textDecoration: "none", boxShadow: `0 4px 14px ${C.blue}40`, transition: "all 0.25s" }}>
             立即体验
@@ -186,11 +188,11 @@ function HeroSection() {
           </p>
 
           <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-            <a href="/h5/sports.html" className="cg-btn-primary"
+            <a href={SPORTS_HREF} className="cg-btn-primary"
               style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 30px", borderRadius: "2rem", background: C.blue, color: "#fff", fontWeight: 700, fontSize: "1rem", textDecoration: "none", boxShadow: `0 8px 24px ${C.blue}40`, transition: "all 0.25s" }}>
               立即体验 →
             </a>
-            <a href="/h5/sports.html" className="cg-btn-ghost"
+            <a href={SPORTS_HREF} className="cg-btn-ghost"
               style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 30px", borderRadius: "2rem", background: C.blueBg, color: C.blue, fontWeight: 700, fontSize: "1rem", textDecoration: "none", transition: "all 0.25s" }}>
               查看赛事
             </a>
@@ -290,7 +292,7 @@ function PhoneMockup() {
       }}>
         <div style={{ width: 28, height: 28, borderRadius: "0.75rem", background: C.blueBg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>⚽</div>
         <div>
-          <div style={{ fontSize: "0.65rem", color: C.textLight }}>英超 64'</div>
+          <div style={{ fontSize: "0.65rem", color: C.textLight }}>英超 64&apos;</div>
           <div style={{ fontSize: "0.85rem", fontWeight: 800, color: C.green }}>2.10↑</div>
         </div>
       </div>
@@ -486,7 +488,7 @@ function CtaSection() {
               无需下载 App，打开浏览器即可开始下注，随时随地体验顶级竞猜体验。
             </p>
             <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-              <a href="/h5/sports.html" className="cg-cta-btn-white"
+              <a href={SPORTS_HREF} className="cg-cta-btn-white"
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 8,
                   padding: "14px 36px", borderRadius: "2rem",
@@ -497,7 +499,7 @@ function CtaSection() {
                 }}>
                 立即体验 →
               </a>
-              <a href="/h5/sports.html" className="cg-cta-btn-ghost"
+              <a href={SPORTS_HREF} className="cg-cta-btn-ghost"
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 8,
                   padding: "14px 36px", borderRadius: "2rem",
@@ -538,7 +540,7 @@ function Footer() {
             <div key={col.title}>
               <h4 style={{ fontSize: "0.875rem", fontWeight: 700, color: "#fff", marginBottom: "0.875rem" }}>{col.title}</h4>
               {col.links.map(l => (
-                <a key={l} href="/h5/sports.html"
+                <a key={l} href={SPORTS_HREF}
                   style={{ display: "block", fontSize: "0.85rem", color: "#94A3B8", textDecoration: "none", marginBottom: "0.5rem", transition: "color 0.2s" }}
                   className="cg-footer-link">
                   {l}

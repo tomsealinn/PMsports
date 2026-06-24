@@ -701,10 +701,16 @@ div[class^="acclist_t"].credits{
 	display: inline-block;
 	vertical-align: middle;
 }
-.acclist_td06.status{
+.acclist_td06.status,
+.acclist_td08.status,
+.acclist_td09.status,
+.acclist_td10.status{
 	position: relative;
 }
-.acclist_td06.status .icon_down{
+.acclist_td06.status .icon_down,
+.acclist_td08.status .icon_down,
+.acclist_td09.status .icon_down,
+.acclist_td10.status .icon_down{
 	position: absolute;
 	top: -16px;
 	left: 0;
@@ -713,17 +719,32 @@ div[class^="acclist_t"].credits{
 	margin: 0;
 	background-position: center right;
 }
-.acclist_td06.status .select_min .icon_down{
+.acclist_td06.status .select_min .icon_down,
+.acclist_td08.status .select_min .icon_down,
+.acclist_td09.status .select_min .icon_down,
+.acclist_td10.status .select_min .icon_down{
 	pointer-events: none;
 }
 .acclist_td06.status.on .select_max .icon_down,
-.acclist_td06.status.on{
+.acclist_td06.status.on,
+.acclist_td08.status.on .select_max .icon_down,
+.acclist_td08.status.on,
+.acclist_td09.status.on .select_max .icon_down,
+.acclist_td09.status.on,
+.acclist_td10.status.on .select_max .icon_down,
+.acclist_td10.status.on{
 	z-index: 3;
 }
-.acclist_td06.status.on tt{
+.acclist_td06.status.on tt,
+.acclist_td08.status.on tt,
+.acclist_td09.status.on tt,
+.acclist_td10.status.on tt{
 	opacity: 0;
 }
-.acclist_td06.status .drop_down{
+.acclist_td06.status .drop_down,
+.acclist_td08.status .drop_down,
+.acclist_td09.status .drop_down,
+.acclist_td10.status .drop_down{
 	top: -8px;
 	left: -16px;
 	width: 128px;
@@ -731,25 +752,46 @@ div[class^="acclist_t"].credits{
 	-webkit-transition: opacity 0.3s ease-in-out 0s;
 	transition: opacity 0.3s ease-in-out 0s;
 }
-.acclist_td06.status.on .select_max .drop_down{top: -24px;}
+.acclist_td06.status.on .select_max .drop_down,
+.acclist_td08.status.on .select_max .drop_down,
+.acclist_td09.status.on .select_max .drop_down,
+.acclist_td10.status.on .select_max .drop_down{top: -24px;}
 
 .acclist_td06.status.on>div>div ~ .drop_down,
-.acclist_td06.status.on>div ~ .drop_down{
+.acclist_td06.status.on>div ~ .drop_down,
+.acclist_td08.status.on>div>div ~ .drop_down,
+.acclist_td08.status.on>div ~ .drop_down,
+.acclist_td09.status.on>div>div ~ .drop_down,
+.acclist_td09.status.on>div ~ .drop_down,
+.acclist_td10.status.on>div>div ~ .drop_down,
+.acclist_td10.status.on>div ~ .drop_down{
 	visibility: visible;
 	opacity: 1;
 	transform: scale(1, 1);
 }
-.acclist_td06.status .drop_down li{
+.acclist_td06.status .drop_down li,
+.acclist_td08.status .drop_down li,
+.acclist_td09.status .drop_down li,
+.acclist_td10.status .drop_down li{
 	transition-delay: 0.1s;
 	-webkit-order: 1;
 	-ms-flex-order: 1;
 	order: 1;
 }
 .acclist_td06.status.on>div>div ~ .drop_down li,
-.acclist_td06.status.on>div ~ .drop_down li{
+.acclist_td06.status.on>div ~ .drop_down li,
+.acclist_td08.status.on>div>div ~ .drop_down li,
+.acclist_td08.status.on>div ~ .drop_down li,
+.acclist_td09.status.on>div>div ~ .drop_down li,
+.acclist_td09.status.on>div ~ .drop_down li,
+.acclist_td10.status.on>div>div ~ .drop_down li,
+.acclist_td10.status.on>div ~ .drop_down li{
 	opacity: 1;
 }
-.acclist_td06.status li.drop_down_on{
+.acclist_td06.status li.drop_down_on,
+.acclist_td08.status li.drop_down_on,
+.acclist_td09.status li.drop_down_on,
+.acclist_td10.status li.drop_down_on{
 	background: #fff;
 	-webkit-order: 0;
 	-ms-flex-order: 0;
@@ -767,6 +809,54 @@ div[class^="acclist_t"].credits{
 	width: 16px;
 	height: 16px;
 	margin-right: calc((100% - 16px * 4)/4);
+}
+.acclist_tr .function{
+	padding: 0 12px;
+	box-sizing: border-box;
+	gap: 8px;
+	-webkit-justify-content: flex-start;
+	-ms-justify-content: flex-start;
+	justify-content: flex-start;
+}
+.acclist_tr .function [class^="btn_"]{
+	display: -webkit-inline-flex;
+	display: -ms-inline-flex;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	margin-right: 0 !important;
+	border: 1px solid #d7e2ee;
+	border-radius: 4px;
+	background: #f7fbff;
+	box-sizing: border-box;
+	cursor: pointer;
+	-webkit-flex: 0 0 32px;
+	-ms-flex: 0 0 32px;
+	flex: 0 0 32px;
+}
+.acclist_tr .function [class^="btn_"] i{
+	display: block;
+	width: 16px;
+	height: 16px;
+	opacity: .8;
+}
+.acclist_tr .function .btn_edit{
+	border-color: #cfe1f3;
+	background: #f4f9ff;
+}
+.acclist_tr .function .btn_dele{
+	border-color: #f0d2d2;
+	background: #fff7f7;
+}
+.acclist_tr .function .btn_lock{
+	border-color: #f0dfb7;
+	background: #fffaf0;
+}
+.acclist_tr .function [class^="btn_"]:hover{
+	border-color: #2980b9;
+	box-shadow: 0 1px 4px rgba(41,128,185,.18);
 }
 div[class^="acclist_t"].credits,
 div[class^="acclist_t"].agent,

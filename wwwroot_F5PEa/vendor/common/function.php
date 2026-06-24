@@ -332,8 +332,8 @@ function str_chk($str,$EngNeed=1){
         return "err_length";
     }
 
-    //不是由英數字組成
-    if(!preg_match("/^[a-zA-Z0-9]*$/",$str)){
+    //不是由英數字或 @ 組成
+    if(!preg_match("/^[a-zA-Z0-9@]*$/",$str)){
         return "err_combination";
     }
 
@@ -351,8 +351,8 @@ function str_chk($str,$EngNeed=1){
         return "err_block_string";
     }
 
-    //至少要有 EngNeed 個英文字 , 不可全英文或全數字
-    if($str_char >= $EngNeed && $str_len > $str_char){
+    //至少要有 EngNeed 個英文字和 1 個數字
+    if($str_char >= $EngNeed && preg_match("/[0-9]/",$str)){
         return "chk_OK";
     }else{
         return "chk_wrong";
@@ -1054,4 +1054,3 @@ function edit_layer_num_str($layer,$num=0){
     }
     return $lay;
 }
-

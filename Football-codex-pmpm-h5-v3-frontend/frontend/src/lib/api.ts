@@ -440,6 +440,7 @@ export interface PmppmPlaceBetResp {
   ok: boolean;
   bet_id: number;
   new_balance: number;
+  new_balance_raw?: number | null;
   promised_payout: number;
   outcome_label: string;
   market_name: string;
@@ -767,6 +768,9 @@ export const oddsApi = {
   },
   listEvents(opts: {
     league?: string;
+    leagues?: string;
+    filter?: string;
+    date?: string;
     status?: OddsEventStatus | string;
     q?: string;
     min_ts?: number;

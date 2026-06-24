@@ -1138,15 +1138,15 @@ function index(_win, _dom){
     }
 
     _self.openLeftMenu=function(){
-        dom.getElementById("left_menu_show").className ="ma_left ma_extend";
-        dom.getElementById("body_show").className ="ma_content ma_extend";
+        dom.getElementById("left_menu_show").className ="ma_left";
+        dom.getElementById("body_show").className ="ma_content";
         leftFrame.openMenu();
     }
 
     _self.closeLeftMenu=function(){
         dom.getElementById("left_menu_show").className ="ma_left";
         dom.getElementById("body_show").className ="ma_content";
-        leftFrame.closeMenu();
+        leftFrame.openMenu();
     }
 
     // 歡迎使用新版公告

@@ -25,6 +25,9 @@ function ClassSelect(_win, _dom){
 
 		_priv.divUl.prev_scroll_lock = true;
 		util.addEvent(divClk, "click", _self.ShowDiv, "ONOPEN");
+		if (divBox && divBox != divClk) {
+			util.addEvent(divBox, "click", _self.ShowDivFromBox, "ONOPEN");
+		}
 		util.addEvent(divUl, "click", _self.ShowDiv, "ONCLOSE");
 		//util.addEvent(divBox, "blur", _self.ShowDiv, "ONCLOSE");
 		_self.checkSel();
@@ -135,6 +138,20 @@ function ClassSelect(_win, _dom){
 
 		_self.resetClass();
 		_self.eventhandler(e, OPCLS, null);
+	}
+
+	_self.ShowDivFromBox = function (e, OPCLS) {
+		if (_priv.divClk == e.target) return;
+		var clkAll = _priv.divClk.getElementsByTagName("*");
+		for (var c = 0, cmax = clkAll.length; c < cmax; c++) {
+			if (clkAll[c] == e.target) return;
+		}
+		var all = _priv.divUl.getElementsByTagName("*");
+		for (var i = 0, max = all.length; i < max; i++) {
+			if (all[i] == e.target) return;
+		}
+		if (_priv.divUl == e.target) return;
+		_self.ShowDiv(e, OPCLS);
 	}
 
 	_self.setParentclass = function (_parentclass) {

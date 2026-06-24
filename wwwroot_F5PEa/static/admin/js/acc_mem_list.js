@@ -314,7 +314,7 @@ function acc_mem_list(_win, _dom, param){
                 _hideuser["Select"] = new win.ClassSelect(win, dom);
                 _hideuser["Select"].setParentclass(_self);
                 _hideuser["Select"].setSelCss("drop_down_on", "", false);
-                _hideuser["Select"].init(_hideuser["sel_hide_user_text"], _hideuser["sel_hide_user_list"], _hideuser["change_hide_user_status_box"], _hideuser["span_hide_user_enable"]);
+                _hideuser["Select"].init(_hideuser["sel_hide_user_text"], _hideuser["sel_hide_user_list"], _hideuser["change_hide_user_box"], _hideuser["span_hide_user_enable"]);
                 _hideuser["Select"].setSelected(ubj["hidden"]);
                 if (_hideuser["sel_hide_user_768"] != null) _hideuser["Select"].creatSelOpt(_hideuser["sel_hide_user_768"]);
                 _hideuser["Select"].addEvent("ONOPEN", _self.show_hide_user_box, ubj);

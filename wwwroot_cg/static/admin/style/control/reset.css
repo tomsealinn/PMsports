@@ -89,7 +89,7 @@ select{border-radius: 0;}
 	width: 100%;
 	min-width: 100%;
 	height: calc(100% - 56px);
-	padding-left: 56px;
+	padding-left: 240px;
 	flex-direction: row;
 	flex: 0 0 100%;
 	overflow: hidden;
@@ -133,7 +133,7 @@ select{border-radius: 0;}
 .ma_loadingfull{
 	position: absolute;
 	right: 0;
-	width: calc(100% - 56px);
+	width: calc(100% - 240px);
 	height: 100%;
 	z-index: 7;
 }
@@ -167,7 +167,7 @@ select{border-radius: 0;}
 .ma_left{
 	position: absolute;
 	display: inline-block;
-	width: 56px;
+	width: 240px;
 	height: 100%;
 	background: #2d4150;
 	cursor: pointer;
@@ -208,16 +208,17 @@ select{border-radius: 0;}
 	overflow-y: auto;
 	-webkit-overflow-scrolling: touch;
 }
+.ma_left_mask{display: none!important;pointer-events: none!important;}
 .ma_extend ~ .ma_left_mask{position: fixed;width:calc(100vw - 240px);height: 100vh;top: 0;right: 0;}
 .ma_extend ~ .ma_right_mask{position: fixed;width:100vw;height: 100vh;top: 0;left: 0;z-index: 8;}
 @media only screen and (max-width:1023px){
 	.ma_main{
-		padding-left: 0;
+		padding-left: 240px;
 	}
 	.ma_left{
-	 	width: 0;
-		visibility: collapse;
-		transform: translate3d(-56px,0,0);
+	 	width: 240px;
+		visibility: visible;
+		transform: translate3d(0%,0,0);
 	}
 	.ma_left.ma_extend{
 		visibility: visible;
@@ -226,13 +227,13 @@ select{border-radius: 0;}
 		transform: translate3d(0%,0,0);
 	}
 	.ma_loading{
-		width: 100%;
+		width: calc(100% - 240px);
 	}
 
 }
 @media only screen and (max-width:767px){
 	.ma_left{
-		width: 0;
+		width: 240px;
 	}
 }
 
@@ -243,7 +244,7 @@ select{border-radius: 0;}
 	}
 	.ma_main_foothide{
 		height: calc(100% - 56px);
-		padding-left: 0;
+		padding-left: 240px;
 	}
 	.ma_foot{
 		-webkit-transform: translate3d(0,0%,0);
