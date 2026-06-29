@@ -52,6 +52,7 @@ function top_menu(_win, _dom) {
     var mu_chat;
     var mu_ann;
     var mu_profile_icon;
+    var profile_user_code;
 
     _self.init = function () {
         util.echo("top load complete");
@@ -88,6 +89,7 @@ function top_menu(_win, _dom) {
         mu_chat = dom.getElementById("mu_chat");
         mu_ann = dom.getElementById("mu_ann");
         mu_profile_icon = dom.getElementById("mu_profile_icon");
+        profile_user_code = dom.getElementById("profile_user_code");
 
         util.addEvent(mu_hab, "click", _self.showLeftPanel);
         util.addEvent(back, "click", _self.backPage);
@@ -170,6 +172,7 @@ function top_menu(_win, _dom) {
         }
         _self.initAnnCookie();
         _self.setLayerDisplay();
+        _self.updateProfileLabel();
     }
 
     //add account 檢查權限
@@ -398,7 +401,7 @@ function top_menu(_win, _dom) {
     _self.showRightPanel = function () {
         _self.connetToServer();
         rightPanel.className = "mu_memberDetailG mu_memberDetail_open";
-        user_code.innerHTML = top.username;
+        _self.updateProfileLabel();
         keepStyle.body_show = dom.getElementById("body_show").style;
         keepStyle.le_bigG = dom.getElementById("le_bigG").style;
         keepStyle.body = dom.body.style;
@@ -415,6 +418,19 @@ function top_menu(_win, _dom) {
         dom.getElementById("le_bigG").removeAttribute("style");
         dom.body.removeAttribute("style");
         rightPanel.className = "mu_memberDetailG";
+    }
+
+    _self.updateProfileLabel = function () {
+        var name = top.username || top.user_name || top.login_id || "";
+        if (!name && top.login_layer && top.layer_id) {
+            name = top.login_layer + top.layer_id;
+        }
+        if (!name) name = "Account";
+        if (user_code) user_code.innerHTML = name;
+        if (profile_user_code) {
+            profile_user_code.innerHTML = name;
+            profile_user_code.title = name;
+        }
     }
 
     _self.connetToServer = function () {
@@ -723,4 +739,3 @@ function top_menu(_win, _dom) {
     }
 
 }
-
