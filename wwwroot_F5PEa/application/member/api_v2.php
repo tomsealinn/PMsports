@@ -796,7 +796,12 @@ if ($path === '/api/pmppm/place-bet' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $validatedPhase = null;
     $eventIdRaw = (string)($body['event_id'] ?? '');
     $isParlayEvent = (strpos($eventIdRaw, ',') !== false);
-    if (!$isParlayEvent && $eventIdRaw !== '') {
+    // A 串关 (parlay) submit carries market_id='PARLAY' + a legs[] array; its
+    // per-leg validation runs in the dedicated block below, so skip the
+    // single-bet validation here.
+    $isParlaySubmit = ((string)($body['market_id'] ?? '') === 'PARLAY'
+        && isset($body['legs']) && is_array($body['legs']) && count($body['legs']) >= 2);
+    if (!$isParlayEvent && !$isParlaySubmit && $eventIdRaw !== '') {
         $gidNum = (int)$eventIdRaw;
         if ($gidNum > 0) {
             try {
@@ -915,8 +920,120 @@ if ($path === '/api/pmppm/place-bet' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             _phase_validation_done:
         }
     }
-    // For parlay or unknown gid we currently skip phase validation; future
-    // work: iterate parlay legs and validate each.
+    // --- Parlay (串关) per-leg validation ----------------------------------
+    // A parlay is stored as ONE bet row: comma-joined gid, combined odds
+    // (∏ leg decimal prices), wtype=PARLAY, and a "/"-joined betstr of the
+    // legs.  We re-validate EACH leg's live price the same way single bets
+    // are (market open + price within tolerance) so a parlay cannot be placed
+    // at stale / forged odds, then recompute the combined odds from the
+    // server-trusted leg prices.  Settlement is currently MANUAL for parlays
+    // (settle_bets.php skips comma gids); operators grade them in the panel.
+    if ($isParlaySubmit) {
+        $legsIn    = $body['legs'];
+        $seenGids  = [];
+        $combined  = 1.0;
+        $gidParts  = [];
+        $descParts = [];
+        foreach ($legsIn as $li => $leg) {
+            if (!is_array($leg)) {
+                http_response_code(400);
+                echo json_encode(['detail' => 'invalid_parlay_leg', 'leg_index' => $li]);
+                exit;
+            }
+            $lgRaw   = (string)($leg['event_id'] ?? '');
+            $lgGid   = (int)$lgRaw;
+            $lgOdds  = (float)($leg['odds'] ?? 0);
+            $lgField = (string)($leg['outcome_field'] ?? '');
+            $lgLine  = (isset($leg['outcome_line']) && $leg['outcome_line'] !== '' && $leg['outcome_line'] !== null)
+                ? (float)$leg['outcome_line'] : null;
+            $lgMid   = (string)($leg['market_id'] ?? '');
+            $lgMname = (string)($leg['market_name'] ?? '');
+            $lgTeams = trim((string)($leg['teams'] ?? ''));
+            $lgLabel = trim((string)($leg['outcome_label'] ?? ($leg['label'] ?? '')));
+            if ($lgRaw === '' || $lgOdds <= 0) {
+                http_response_code(400);
+                echo json_encode(['detail' => 'invalid_parlay_leg', 'leg_index' => $li]);
+                exit;
+            }
+            // Same-match (correlated) legs are not allowed in one parlay.
+            if (isset($seenGids[$lgRaw])) {
+                http_response_code(409);
+                error_log("place-bet parlay rejected: same_match leg={$li} gid={$lgGid}");
+                echo json_encode(['detail' => 'parlay_same_match', 'leg_index' => $li, 'gid' => $lgGid]);
+                exit;
+            }
+            $seenGids[$lgRaw] = true;
+            // Validate price for foot_match legs (mirror the single-bet rule).
+            // Non-foot_match gids (outrights) skip price validation, exactly as
+            // single outright bets do above (the _phase_validation_done skip).
+            $legPrice = $lgOdds;
+            $fmRow = false;
+            try {
+                $fs = $pdo->prepare("SELECT gid FROM foot_match WHERE gid = :g LIMIT 1");
+                $fs->execute([':g' => $lgGid]);
+                $fmRow = $fs->fetch();
+            } catch (PDOException $e) {
+                $fmRow = false;
+            }
+            if ($fmRow) {
+                $lctx = fetchFastApiOddsContext($lgGid);
+                if ($lctx === null) {
+                    try {
+                        $rs = $pdo->prepare(
+                            "SELECT m.gid, m.status, m.is_inball, m.`datetime`,
+                                    m.league, m.team_h, m.team_c,
+                                    m.inball_h_hr, m.inball_c_hr,
+                                    m.apisports_status, m.apisports_elapsed,
+                                    x.r_cn
+                             FROM foot_match m
+                             LEFT JOIN foot_match_xml x ON x.gid = m.gid
+                             WHERE m.gid = :g LIMIT 1");
+                        $rs->execute([':g' => $lgGid]);
+                        $rrow = $rs->fetch();
+                    } catch (PDOException $e) {
+                        $rrow = false;
+                    }
+                    $lctx = $rrow ? activeOddsContext($rrow) : ['phase' => 'closed', 'markets' => []];
+                }
+                if ($lctx['phase'] === 'closed' || empty($lctx['markets'])) {
+                    http_response_code(409);
+                    error_log("place-bet parlay rejected: market_closed leg={$li} gid={$lgGid} phase={$lctx['phase']}");
+                    echo json_encode(['detail' => 'market_closed', 'leg_index' => $li, 'gid' => $lgGid]);
+                    exit;
+                }
+                $lline = locateMarketLine($lctx['markets'], $lgMname, $lgField, $lgLine, $lgMid);
+                if (!$lline) {
+                    http_response_code(409);
+                    error_log("place-bet parlay rejected: market_not_open leg={$li} gid={$lgGid} market={$lgMname} field={$lgField}");
+                    echo json_encode(['detail' => 'market_not_open', 'leg_index' => $li, 'gid' => $lgGid, 'market_name' => $lgMname, 'outcome_field' => $lgField]);
+                    exit;
+                }
+                $ltol = max(0.005, $lline['price'] * 0.005);
+                if (abs($lline['price'] - $lgOdds) > $ltol) {
+                    http_response_code(409);
+                    error_log("place-bet parlay rejected: odds_changed leg={$li} gid={$lgGid} submitted={$lgOdds} current={$lline['price']}");
+                    echo json_encode(['detail' => 'odds_changed', 'leg_index' => $li, 'gid' => $lgGid, 'submitted' => $lgOdds, 'current' => $lline['price']]);
+                    exit;
+                }
+                $legPrice = (float)$lline['price'];
+            }
+            $combined  *= $legPrice;
+            $gidParts[] = (string)$lgGid;
+            $part = trim($lgTeams . ' ' . $lgMname . ' ' . $lgLabel);
+            $descParts[] = $part !== '' ? $part : ('#' . $lgGid);
+        }
+        if (count($gidParts) < 2) {
+            http_response_code(400);
+            echo json_encode(['detail' => 'parlay_needs_2_legs']);
+            exit;
+        }
+        // Server-authoritative combined odds + gid + description override the
+        // client-supplied values used by the INSERT below.
+        $odds = round($combined, 4);
+        $body['event_id']      = implode(',', $gidParts);
+        $body['outcome_label'] = mb_substr(implode(' / ', $descParts), 0, 480);
+        error_log("place-bet parlay ok: legs=" . count($gidParts) . " combined={$odds} gid={$body['event_id']}");
+    }
 
     // Read fresh balance from database
     try {
@@ -931,9 +1048,14 @@ if ($path === '/api/pmppm/place-bet' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     } catch (PDOException $e) {
         // fall through with session value
     }
-    // Convert to member's native currency for balance comparison
+    // Deduct in the member's native currency (RMB). The H5 slip is denominated
+    // in the member's native currency (¥ RMB) and sends that exact figure as
+    // stake_amount; member.balance_credit is also stored natively (RMB). So the
+    // wager is debited 1:1 with NO USDT round-trip. The legacy crypto-wallet
+    // conversion (fromUSDT) inflated RMB deductions by the FX rate (~7.2x),
+    // draining balances — e.g. a ¥14.2 stake debited ~¥102.
     $memCurrency = $_SESSION['currency'] ?? 'RMB';
-    $amountNative = fromUSDT($amount, $memCurrency);
+    $amountNative = round($stakeAmount, 2);
     if ($amountNative > (float)$_SESSION['credit_balance']) {
         http_response_code(400);
         echo json_encode(['detail' => 'insufficient credit']);
@@ -1011,11 +1133,19 @@ if ($path === '/api/pmppm/place-bet' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         // Generate ticket_id
         $ticketId = 'DT' . date('YmdHis') . rand(100, 999);
 
-        // Determine showtype and chose_team
+        // Determine showtype and chose_team.  Guard against empty team names
+        // (parlay rows skip the single-event team lookup, so teamH/teamC are
+        // ''): stripos($label, '') returns 0 (!== false) and would wrongly set
+        // chose_team='H'.  A parlay has no single chosen team → leave null.
         $showtype = 'today';
+        if ($isParlaySubmit) {
+            $showtype = 'parlay';
+        } elseif ($validatedPhase === 'inplay') {
+            $showtype = 'live';
+        }
         $choseTeam = null;
-        if (stripos($outcomeLabel, $teamH) !== false) $choseTeam = 'H';
-        elseif (stripos($outcomeLabel, $teamC) !== false) $choseTeam = 'C';
+        if ($teamH !== '' && stripos($outcomeLabel, $teamH) !== false) $choseTeam = 'H';
+        elseif ($teamC !== '' && stripos($outcomeLabel, $teamC) !== false) $choseTeam = 'C';
 
         // Parse wtype/rtype/spread for automatic settlement.
         // Priority: (1) explicit hints from frontend (`market_id` like
@@ -1272,9 +1402,26 @@ if ($path === '/api/pmppm/my-bets') {
         $memN->execute([':id' => (int)$_SESSION['uid']]);
         $memRow = $memN->fetch();
         $username = $memRow ? $memRow['name'] : ($_SESSION['username'] ?? '');
-        $stmt = $pdoC->prepare("SELECT ID, gid, wtype, ptype, ptype_tw, chose_team, team_h, team_c, team_h_tw, team_c_tw, league, league_tw, spread, score, ms, rtype, bet_golds, win_gold, ioratio, bet_time, result, cancel, isResult, status, inball, inball_result, datetime FROM bet WHERE m_name = :u ORDER BY ID DESC LIMIT 80");
+        $stmt = $pdoC->prepare("SELECT ID, gid, wtype, ptype, ptype_tw, chose_team, team_h, team_c, team_h_tw, team_c_tw, league, league_tw, spread, score, ms, rtype, betstr, bet_golds, win_gold, ioratio, bet_time, result, cancel, isResult, status, inball, inball_result, datetime FROM bet WHERE m_name = :u ORDER BY ID DESC LIMIT 80");
         $stmt->execute([':u' => $username]);
         $rows = $stmt->fetchAll();
+        // Resolve Chinese team names from the shared db_sports.name_cn_cache —
+        // the SAME source the events list uses for home_cn/away_cn — so the bet
+        // list never falls back to raw English for long-tail clubs (Finnish /
+        // Swedish / etc.) that the frontend's curated ~250-team map can't cover.
+        // Pure cached DB lookup: no request-path online translation, no latency.
+        $cnNames = [];
+        foreach ($rows as $r) {
+            if (!empty($r['team_h'])) $cnNames[] = $r['team_h'];
+            if (!empty($r['team_c'])) $cnNames[] = $r['team_c'];
+        }
+        $cnMap = [];
+        try {
+            if ($cnNames) $cnMap = NameTranslator::lookup($pdo, $cnNames);
+        } catch (\Throwable $e) {
+            error_log('my-bets name_cn lookup failed: ' . $e->getMessage());
+            $cnMap = [];
+        }
         // wtype → market name dictionary (mirrors WTYPE_CN in sports.html
         // so the row card can render "独赢 / 让球 / 大小" instead of an
         // opaque 2-letter code when ptype is NULL — which is the case for
@@ -1290,6 +1437,7 @@ if ($path === '/api/pmppm/my-bets') {
             'BTS'   => '双方进球',
             'HT_BTS'=> '半场双方进球',
             'CS'    => '正确比分',
+            'PARLAY'=> '串关',
         ];
         foreach ($rows as $r) {
             $status = 'open';
@@ -1306,9 +1454,12 @@ if ($path === '/api/pmppm/my-bets') {
             // Outcome label — chose_team H/C maps to team picked; for
             // line-bound markets (RB/OU) prepend the handicap so the
             // user can see "让球 主队 -1.25 @ 2.05" reconstructed.
+            // Three-tier Chinese resolution: name_cn_cache → legacy *_tw → English.
+            $teamHcn = $cnMap[$r['team_h']] ?? ($r['team_h_tw'] ?: $r['team_h']);
+            $teamCcn = $cnMap[$r['team_c']] ?? ($r['team_c_tw'] ?: $r['team_c']);
             $pickedTeam = '';
-            if ($r['chose_team'] === 'H')      $pickedTeam = $r['team_h_tw'] ?: $r['team_h'];
-            elseif ($r['chose_team'] === 'C')  $pickedTeam = $r['team_c_tw'] ?: $r['team_c'];
+            if ($r['chose_team'] === 'H')      $pickedTeam = $teamHcn;
+            elseif ($r['chose_team'] === 'C')  $pickedTeam = $teamCcn;
             elseif ($r['chose_team'] === 'N')  $pickedTeam = '和局';   // draw
             $spreadLabel = '';
             if (in_array($wt, ['SP','HT_SP','OU','HT_OU','FS'], true) && $r['spread'] !== null && $r['spread'] !== '') {
@@ -1316,7 +1467,7 @@ if ($path === '/api/pmppm/my-bets') {
             }
             $outcome = $pickedTeam . $spreadLabel;
             if ($outcome === '') {
-                $outcome = ($r['team_h'].' vs '.$r['team_c']);
+                $outcome = ($teamHcn.' vs '.$teamCcn);
             }
             $bets[] = [
                 'id'              => (int)$r['ID'],
@@ -1333,9 +1484,15 @@ if ($path === '/api/pmppm/my-bets') {
                 'team_c'          => $r['team_c'],
                 'team_h_tw'       => $r['team_h_tw'],
                 'team_c_tw'       => $r['team_c_tw'],
+                // Chinese names the H5 card actually reads (b.team_h_cn / team_c_cn).
+                'team_h_cn'       => $teamHcn,
+                'team_c_cn'       => $teamCcn,
                 'chose_team'      => $r['chose_team'],     // H / C / N
                 'league'          => $r['league_tw'] ?: $r['league'],
                 'spread'          => $r['spread'],
+                // betstr carries the parlay legs ("/"-joined) so the H5 card
+                // renders a 串关 ticket's selections instead of just "串关".
+                'betstr'          => $r['betstr'],
                 'score'           => $r['score'],
                 'inball'          => $r['inball'],
                 'inball_result'   => $r['inball_result'],
@@ -1639,12 +1796,12 @@ function resolveMainOddsHint(string $key, string $field, ?float $line): array {
             $r = $sideHC($f);
             return ['wtype' => $r === null ? null : 'DNB',    'rtype' => $r, 'spread' => null, 'marketEn' => 'Draw No Bet'];
         case 'corners':
-            // Settlement of corners requires corner counts which api-sports
-            // does not expose for free tier. Mark wtype=CORNERS so the
-            // bet is recognised by /admin/ but settle_bets leaves it for
-            // manual grading.
+            // Corner totals (角球大小) — the main_corners inline button is an
+            // Over/Under on full-match corners.  settle_bets grades CORNER_OU
+            // from foot_match.apisports_corners_h/c (the Goalserve live count
+            // the finalizer leaves intact at full-time).
             $r = $sideOU($f);
-            return ['wtype' => $r === null ? null : 'CORNERS', 'rtype' => $r, 'spread' => $line, 'marketEn' => 'Corners Totals'];
+            return ['wtype' => $r === null ? null : 'CORNER_OU', 'rtype' => $r, 'spread' => $line, 'marketEn' => 'Corners Totals'];
         default:
             return ['wtype' => null, 'rtype' => null, 'spread' => null, 'marketEn' => null];
     }
@@ -1705,7 +1862,8 @@ function parseSettlementHints(
         '双方进球' => 'Both Teams To Score', '两队进球' => 'Both Teams To Score',
         '上半场双方进球' => 'Both Teams To Score HT', '半场两队进球' => 'Both Teams To Score HT',
         '下半场双方进球' => 'Both Teams To Score 2H',
-        '正确比分' => 'Correct Score',
+        '正确比分' => 'Correct Score', '波胆' => 'Correct Score', '全场波胆' => 'Correct Score',
+        '上半场波胆' => 'Correct Score (1st Half)', '半场波胆' => 'Correct Score (1st Half)', '上半场正确比分' => 'Correct Score (1st Half)',
         '角球大小' => 'Corners Totals',
     ];
     $en = $cnToEn[trim($marketName)] ?? trim($marketName);
@@ -1740,6 +1898,398 @@ function parseSettlementHints(
         if (preg_match('/[+-]?\d+(?:\.\d+)?/', $s, $m)) return (float)$m[0];
         return null;
     };
+
+    // ---- Corners (角球) ----------------------------------------------------
+    // Must run BEFORE the generic spread/total branches below — "Corners
+    // Totals" / "Corners Asian Handicap" contain "total"/"handicap" and would
+    // otherwise be mis-graded as goal OU/SP.  Full-match corner markets settle
+    // on the FINAL corner count (foot_match.apisports_corners_h/c):
+    //   Over/Under → CORNER_OU,  Home/Away → CORNER_HDP.
+    // Half-time / 3-way / exotic corner markets (race / which-team / last /
+    // exactly) have no settleable full-match total → wtype stays null so the
+    // bet is accepted but left for manual grading in settle_bets.
+    $isCornerMkt = (strpos($enLower, 'corner') !== false) || (mb_strpos($marketName, '角球') !== false);
+    if ($isCornerMkt) {
+        $cHalf = (strpos($enLower, '1st half') !== false || strpos($enLower, 'first half') !== false
+                  || strpos($enLower, '2nd half') !== false || strpos($enLower, 'second half') !== false
+                  || strpos($enLower, '(1st') !== false || strpos($enLower, '(2nd') !== false
+                  || mb_strpos($marketName, '半场') !== false);
+        // European / 3-way corner handicap is hidden in the H5 UI (Asian-only)
+        // → leave null (manual).  Race / which-team / last / exactly likewise.
+        $cExotic = (strpos($enLower, 'race') !== false || strpos($enLower, 'which team') !== false
+                    || strpos($enLower, 'last corner') !== false || strpos($enLower, 'exactly') !== false
+                    || strpos($enLower, '3 way') !== false || strpos($enLower, '3way') !== false
+                    || strpos($enLower, 'european') !== false || mb_strpos($marketName, '欧洲') !== false
+                    || preg_match('/(exact|正好|最后|哪队|率先)/u', $olLower));
+        if (!$cHalf && !$cExotic) {
+            $fLow  = strtolower($outcomeField);
+            $cLine = $outcomeLine !== null ? $outcomeLine : $extractNumber($ol);
+            $cOver  = ($fLow === 'over'  || preg_match('/(over|大|高于)/iu', $olLower));
+            $cUnder = ($fLow === 'under' || preg_match('/(under|小|低于)/iu', $olLower));
+            // TEAM corner totals carry the side in the market NAME (Home/Away
+            // Corners Over/Under) → settle on that single team's corner count.
+            $cNameH = (strpos($enLower, 'home') !== false) || (mb_strpos($marketName, '主队') !== false);
+            $cNameC = (strpos($enLower, 'away') !== false) || (mb_strpos($marketName, '客队') !== false);
+            if ($cNameH || $cNameC) {
+                if ($cOver || $cUnder) {
+                    $wtype = 'CRN_T_OU'; $rtype = ($cNameH ? 'H' : 'C') . '_' . ($cOver ? 'OVER' : 'UNDER'); $spread = $cLine;
+                }
+            } elseif ($cOver) {
+                $wtype = 'CORNER_OU'; $rtype = 'OVER';  $spread = $cLine;
+            } elseif ($cUnder) {
+                $wtype = 'CORNER_OU'; $rtype = 'UNDER'; $spread = $cLine;
+            } else {
+                $side = $matchTeam($ol);          // H / C / null (true corner handicap)
+                if ($side === 'H' || $side === 'C') {
+                    $wtype = 'CORNER_HDP'; $rtype = $side; $spread = $cLine;
+                }
+            }
+        }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+
+    // ====================== A1 markets (Goalserve-derived) ====================
+    // These settle from the FINAL foot_match score / HT score / corner / card
+    // counts (see settle_graders.php).  Each family RETURNS immediately so the
+    // generic ML/SP/OU chain below never mis-claims them.  Anything we can't
+    // resolve confidently keeps wtype=null → accepted but graded manually.
+    $ouDir = function () use ($outcomeField, $olLower): ?string {
+        $f = strtolower($outcomeField);
+        if ($f === 'over'  || $f === 'o' || preg_match('/(over|大|高于)/iu', $olLower))  return 'OVER';
+        if ($f === 'under' || $f === 'u' || preg_match('/(under|小|低于)/iu', $olLower)) return 'UNDER';
+        return null;
+    };
+    $ynDir = function () use ($outcomeField, $olLower): ?string {
+        $f = strtolower($outcomeField);
+        if ($f === 'yes' || $f === 'y' || preg_match('/(yes|是)/iu', $olLower)) return 'Y';
+        if ($f === 'no'  || $f === 'n' || preg_match('/(no|否)/iu', $olLower))  return 'N';
+        return null;
+    };
+    // Exact count code "N" / "N+" from the outcome field or label.
+    $exactCode = function () use ($outcomeField, $ol, $olLower): ?string {
+        $src = $outcomeField !== '' ? $outcomeField : $ol;
+        if (preg_match('/(\d+)\s*\+/', $src, $m)) return $m[1] . '+';
+        // Goalserve encodes "N or more" as the selection "more N" (e.g. "more 7").
+        if (preg_match('/more\s*(\d+)/i', $src, $mm)) return $mm[1] . '+';
+        if (preg_match('/(or more|及以上|或以上|\bplus\b)/iu', $olLower) && preg_match('/(\d+)/', $src, $m2)) return $m2[1] . '+';
+        if (preg_match('/^\s*(\d+)\s*$/', $src, $m)) return $m[1];
+        return null;
+    };
+    $hasZh = function (string $needle) use ($marketName): bool { return mb_strpos($marketName, $needle) !== false; };
+    // 1X2 result token from a selection part ("Home"/"1"/"主", "Draw"/"x", "Away"/"2"/"客").
+    $resTok = function (string $s): ?string {
+        $s = mb_strtolower(trim($s), 'UTF-8');
+        if ($s === '1' || $s === 'h' || strpos($s, 'home') !== false || strpos($s, '主') !== false) return 'H';
+        if ($s === 'x' || $s === 'd' || strpos($s, 'draw') !== false || strpos($s, '平') !== false || strpos($s, '和') !== false) return 'D';
+        if ($s === '2' || $s === 'c' || strpos($s, 'away') !== false || strpos($s, '客') !== false) return 'C';
+        return null;
+    };
+
+    // ---- European / 3-way handicap: HIDDEN in the H5 UI (Asian-only).  Hard
+    //      NULL it so the generic SP branch below (matches "...handicap")
+    //      can never silently mis-grade a European line as an Asian spread.
+    if (strpos($enLower, 'european handicap') !== false || strpos($enLower, '3-way handicap') !== false
+        || strpos($enLower, '3 way handicap') !== false || strpos($enLower, 'handicap result') !== false
+        || $hasZh('欧洲让球') || $hasZh('欧式让球') || $hasZh('三项让球') || $hasZh('让球胜平负')) {
+        return ['wtype' => null, 'rtype' => null, 'spread' => null, 'marketEn' => $en];
+    }
+
+    // ---- Cards (红黄牌) — settle on FINAL card count (yc+rc).  Runs FIRST so
+    //      "Home Team Total Cards" / "Cards Over/Under" are never mis-claimed by
+    //      the goal team-total / generic-OU branches.  Booking-POINTS markets
+    //      (Y=10/R=25) and European/half/player/first card markets are NOT
+    //      count-equivalent → left null (manual). ----
+    $isCardMkt = (strpos($enLower, 'card') !== false || $hasZh('红黄牌') || $hasZh('黄牌'));
+    if ($isCardMkt) {
+        $kSkip = (strpos($enLower, 'player') !== false || strpos($enLower, 'european') !== false
+                  || strpos($enLower, 'booking') !== false || strpos($enLower, 'point') !== false
+                  || strpos($enLower, 'first') !== false || strpos($enLower, '3 way') !== false || strpos($enLower, '3way') !== false
+                  || strpos($enLower, '1st half') !== false || strpos($enLower, 'first half') !== false
+                  || strpos($enLower, '2nd half') !== false || strpos($enLower, 'second half') !== false
+                  || strpos($enLower, '(1st') !== false || strpos($enLower, '(2nd') !== false
+                  || $hasZh('半场') || $hasZh('球员') || $hasZh('首') || $hasZh('积分') || $hasZh('点数') || $hasZh('欧洲'));
+        if (!$kSkip) {
+            $kLine  = $outcomeLine !== null ? $outcomeLine : $extractNumber($ol);
+            $kOver  = ($ouDir() === 'OVER');
+            $kUnder = ($ouDir() === 'UNDER');
+            $kNameH = (strpos($enLower, 'home') !== false) || $hasZh('主队');
+            $kNameC = (strpos($enLower, 'away') !== false) || $hasZh('客队');
+            $kIsHdp = (strpos($enLower, 'handicap') !== false || $hasZh('让球'));
+            if ($kNameH || $kNameC) {
+                if ($kOver || $kUnder) { $wtype = 'CARD_T_OU'; $rtype = ($kNameH ? 'H' : 'C') . '_' . ($kOver ? 'OVER' : 'UNDER'); $spread = $kLine; }
+            } elseif ($kIsHdp) {
+                $side = $matchTeam($ol);
+                if ($side === 'H' || $side === 'C') { $wtype = 'CARDS_HDP'; $rtype = $side; $spread = $kLine; }
+            } elseif ($kOver)  { $wtype = 'CARDS_OU'; $rtype = 'OVER';  $spread = $kLine; }
+            elseif ($kUnder)   { $wtype = 'CARDS_OU'; $rtype = 'UNDER'; $spread = $kLine; }
+        }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+
+    // ============ A2 Tier-0 markets (foot_match-derivable) ============
+    // ---- Goal Line (Asian total goals; full / 1st half) ----
+    if (strpos($enLower, 'goal line') !== false
+        && strpos($enLower, '2nd half') === false && strpos($enLower, 'second half') === false) {
+        $half = (strpos($enLower, '1st half') !== false || strpos($enLower, 'first half') !== false
+                 || strpos($enLower, '(1st') !== false || $hasZh('上半场'));
+        $d = $ouDir(); $L = $outcomeLine !== null ? $outcomeLine : $extractNumber($ol);
+        if ($d !== null && $L !== null) { $wtype = $half ? 'HT_OU' : 'OU'; $rtype = $d; $spread = $L; }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+    // ---- Winning margin ("1 by 1" / "2 by 4+" / "Score Draw" / "Draw") ----
+    if (strpos($enLower, 'winning margin') !== false || $hasZh('净胜球')) {
+        $src = $outcomeField !== '' ? strtolower(trim($outcomeField)) : $olLower;
+        if (strpos($src, 'score draw') !== false || $hasZh('有球平局')) { $wtype = 'MARGIN'; $rtype = 'DS'; }
+        elseif (preg_match('/^\s*([12])\s*by\s*(\d+)\s*(\+)?/', $src, $m)) {
+            $wtype = 'MARGIN'; $rtype = ($m[1] === '1' ? 'H' : 'C') . '_' . $m[2] . (!empty($m[3]) ? '+' : '');
+        } elseif (strpos($src, 'draw') !== false || strpos($src, 'no goal') !== false || $hasZh('平局') || $hasZh('无进球')) {
+            $wtype = 'MARGIN'; $rtype = 'D0';   // goalless draw (Score Draw handled above)
+        }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+    // ---- Result + Total Goals combo ("Home/Over" + line; full / 1st half) ----
+    if (strpos($enLower, 'result/total') !== false || strpos($enLower, 'result / total') !== false
+        || strpos($enLower, 'results/total') !== false || $hasZh('胜负+总进球') || $hasZh('胜负/总进球')) {
+        $src = $outcomeField !== '' ? $outcomeField : $ol;
+        $parts = preg_split('#\s*/\s*#', $src);
+        $L = $outcomeLine !== null ? $outcomeLine : $extractNumber($ol);
+        if (count($parts) === 2 && $L !== null) {
+            $r = $resTok($parts[0]); $pl = mb_strtolower(trim($parts[1]), 'UTF-8');
+            $ou = ($pl === 'o' || strpos($pl, 'over') !== false || strpos($pl, '大') !== false) ? 'OVER'
+                : (($pl === 'u' || strpos($pl, 'under') !== false || strpos($pl, '小') !== false) ? 'UNDER' : null);
+            if ($r !== null && $ou !== null) {
+                $half = (strpos($enLower, '1st half') !== false || strpos($enLower, '(1st') !== false || $hasZh('上半场'));
+                $wtype = $half ? 'HT_RES_TOT' : 'RES_TOT'; $rtype = $r . '_' . $ou; $spread = $L;
+            }
+        }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+    // ---- Total Goals + Both Teams To Score combo ("o/yes" + line) ----
+    if (strpos($enLower, 'total goals/both') !== false || strpos($enLower, 'total goals / both') !== false
+        || $hasZh('总进球+双方进球')) {
+        $src = $outcomeField !== '' ? $outcomeField : $ol;
+        $parts = preg_split('#\s*/\s*#', $src);
+        $L = $outcomeLine !== null ? $outcomeLine : $extractNumber($ol);
+        if (count($parts) === 2 && $L !== null) {
+            $p0 = mb_strtolower(trim($parts[0]), 'UTF-8'); $p1 = mb_strtolower(trim($parts[1]), 'UTF-8');
+            $ou = ($p0 === 'o' || strpos($p0, 'over') !== false || strpos($p0, '大') !== false) ? 'OVER'
+                : (($p0 === 'u' || strpos($p0, 'under') !== false || strpos($p0, '小') !== false) ? 'UNDER' : null);
+            $yn = (strpos($p1, 'yes') !== false || strpos($p1, '是') !== false) ? 'Y'
+                : ((strpos($p1, 'no') !== false || strpos($p1, '否') !== false) ? 'N' : null);
+            if ($ou !== null && $yn !== null) { $wtype = 'TOT_BTS'; $rtype = $ou . '_' . $yn; $spread = $L; }
+        }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+    // ---- Result + Both Teams To Score combo ("Home/Yes") ----
+    if (strpos($enLower, 'result/both') !== false || strpos($enLower, 'results/both') !== false
+        || strpos($enLower, 'result / both') !== false || strpos($enLower, 'results / both') !== false
+        || $hasZh('胜负+双方进球') || $hasZh('胜负/双方进球')) {
+        $src = $outcomeField !== '' ? $outcomeField : $ol;
+        $parts = preg_split('#\s*/\s*#', $src);
+        if (count($parts) === 2) {
+            $r = $resTok($parts[0]); $p1 = mb_strtolower(trim($parts[1]), 'UTF-8');
+            $yn = (strpos($p1, 'yes') !== false || strpos($p1, '是') !== false) ? 'Y'
+                : ((strpos($p1, 'no') !== false || strpos($p1, '否') !== false) ? 'N' : null);
+            if ($r !== null && $yn !== null) { $wtype = 'RES_BTS'; $rtype = $r . '_' . $yn; }
+        }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+
+    // ============ A2-safe markets (Goalserve soccerfixtures enrich) ============
+    // Outcome-format-confident subset only.  Method of Victory (WIN_METH) and
+    // 1st Goal in Interval (FG_INT*) have graders in settle_graders.php but are
+    // NOT hinted here yet — their outcome-label formats need live verification,
+    // so they stay manual (wtype=null) until confirmed (never mis-tagged).
+
+    // ---- Game Decided After Penalties / in Extra Time (Yes/No). ----
+    if (strpos($enLower, 'decided after penalties') !== false || $hasZh('点球大战决胜')
+        || strpos($enLower, 'decided in extra time') !== false || $hasZh('加时决胜')) {
+        $isPen = (strpos($enLower, 'penalt') !== false || $hasZh('点球'));
+        $d = $ynDir();
+        if ($d !== null) { $wtype = $isPen ? 'DEC_PEN' : 'DEC_ET'; $rtype = $d; }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+    // ---- To Qualify / To Advance (team advances).  Outcome home/away. ----
+    if (strpos($enLower, 'to qualify') !== false || strpos($enLower, 'to advance') !== false
+        || $hasZh('晋级')) {
+        $r = $resTok($outcomeField !== '' ? $outcomeField : $ol);
+        if ($r === 'H' || $r === 'C') { $wtype = 'QUALIFY'; $rtype = $r; }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+    // ---- Team to score first / last + "which team scores the Nth goal".
+    //      Outcome home / away / no-goal.  FGL_TEAM|LGL_TEAM rtype H|C|NONE;
+    //      Nth-goal → NGL_TEAM rtype H|C|NO with spread = N. ----
+    if (strpos($enLower, 'team to score first') !== false || strpos($enLower, 'to score first') !== false
+        || strpos($enLower, 'team to score last') !== false || strpos($enLower, 'to score last') !== false
+        || strpos($enLower, 'last team to score') !== false
+        || preg_match('/which team will score the \d+/', $enLower)
+        || $hasZh('最先进球队') || $hasZh('最后进球队')
+        || preg_match('/哪队攻入第\d+球/u', $marketName)) {
+        $src  = $outcomeField !== '' ? $outcomeField : $ol;
+        $isNo = (strpos($olLower, 'no goal') !== false || strpos($olLower, 'neither') !== false
+                 || strpos($olLower, 'no team') !== false || $hasZh('无进球')
+                 || mb_strpos($ol, '没有') !== false
+                 || strtolower($outcomeField) === 'none' || strtolower($outcomeField) === 'no');
+        $r = $isNo ? 'NONE' : $resTok($src);
+        $n = null;
+        if (preg_match('/which team will score the (\d+)/', $enLower, $mm)) $n = (int)$mm[1];
+        elseif (preg_match('/哪队攻入第(\d+)球/u', $marketName, $mm)) $n = (int)$mm[1];
+        if ($n !== null && $n >= 1) {
+            if ($isNo)                       { $wtype = 'NGL_TEAM'; $rtype = 'NO'; $spread = (float)$n; }
+            elseif ($r === 'H' || $r === 'C') { $wtype = 'NGL_TEAM'; $rtype = $r;  $spread = (float)$n; }
+        } else {
+            $isLast = (strpos($enLower, 'last') !== false || $hasZh('最后'));
+            if ($r === 'NONE' || $r === 'H' || $r === 'C') {
+                $wtype = $isLast ? 'LGL_TEAM' : 'FGL_TEAM'; $rtype = $r;
+            }
+        }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+
+    // ---- Half Time / Full Time ("Home/Away", "1/X", "主/客") ----
+    if (strpos($enLower, 'half time/full time') !== false || strpos($enLower, 'half time / full time') !== false
+        || strpos($enLower, 'ht/ft') !== false || $hasZh('半全场')) {
+        $res1 = function (string $s): ?string {
+            $s = mb_strtolower(trim($s), 'UTF-8');
+            if (preg_match('/(home|主|^1$|^h$)/u', $s)) return 'H';
+            if (preg_match('/(draw|平|和|^x$|^d$)/u', $s)) return 'D';
+            if (preg_match('/(away|客|^2$|^c$)/u', $s)) return 'C';
+            return null;
+        };
+        $src   = $outcomeField !== '' ? $outcomeField : $ol;
+        $parts = preg_split('#\s*/\s*#', $src);
+        if (count($parts) === 2) {
+            $a = $res1($parts[0]); $b = $res1($parts[1]);
+            if ($a !== null && $b !== null) { $wtype = 'HT_FT'; $rtype = $a . '/' . $b; }
+        }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+
+    // ---- Team exact goals + "How many goals will X score?" (precede team O/U) ----
+    if (preg_match('/(home|away) team exact goals/', $enLower)
+        || preg_match('/how many goals will (home|away)/', $enLower)
+        || $hasZh('主队精确进球') || $hasZh('客队精确进球') || $hasZh('主队进球数') || $hasZh('客队进球数')) {
+        $side = (strpos($enLower, 'home') !== false || $hasZh('主队')) ? 'H' : 'C';
+        $code = $exactCode();
+        if ($code !== null) { $wtype = 'EXACT_TEAM'; $rtype = $side . '_' . $code; }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+    // ---- Exact total goals (full / 1st half / 2nd half) ----
+    if (strpos($enLower, 'exact goals') !== false || strpos($enLower, 'exact total goals') !== false
+        || $hasZh('精确进球') || $hasZh('精确总进球')) {
+        $code = $exactCode();
+        if ($code !== null) {
+            if (strpos($enLower, '1st half') !== false || strpos($enLower, 'first half') !== false || $hasZh('上半场')) $wtype = 'EXTG_HT';
+            elseif (strpos($enLower, '2nd half') !== false || strpos($enLower, 'second half') !== false || $hasZh('下半场')) $wtype = 'EXTG_2H';
+            else $wtype = 'EXACT_TG';
+            $rtype = $code;
+        }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+
+    // ---- 2nd-half BTS ----
+    if (preg_match('/both teams to score.*(2nd half|second half|2h)/', $enLower) || $hasZh('下半场双方')) {
+        $d = $ynDir(); if ($d !== null) { $wtype = '2H_BTS'; $rtype = $d; }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+    // ---- 2nd-half Odd/Even ----
+    if (preg_match('/(odd\/even.*(2nd|second) half|(2nd|second) half.*odd\/even)/', $enLower) || $hasZh('下半场单双')) {
+        $f = strtolower($outcomeField);
+        if ($f === 'odd'  || preg_match('/(odd|单)/iu', $olLower))  { $wtype = '2H_OE'; $rtype = 'ODD'; }
+        elseif ($f === 'even' || preg_match('/(even|双)/iu', $olLower)) { $wtype = '2H_OE'; $rtype = 'EVEN'; }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+    // ---- Odd/Even: per-team (TEAM_OE) / 1st-half (HT_OE) / full (OE).
+    //      2nd-half already returned above.  ----
+    if (strpos($enLower, 'odd/even') !== false || strpos($enLower, 'odd or even') !== false || $hasZh('单双')) {
+        $f = strtolower($outcomeField); $oe = null;
+        if ($f === 'odd'  || preg_match('/(odd|单)/iu', $olLower))  $oe = 'ODD';
+        elseif ($f === 'even' || preg_match('/(even|双)/iu', $olLower)) $oe = 'EVEN';
+        if ($oe !== null) {
+            if (strpos($enLower, 'home') !== false || strpos($enLower, 'away') !== false || $hasZh('主队') || $hasZh('客队')) {
+                $side = (strpos($enLower, 'home') !== false || $hasZh('主队')) ? 'H' : 'C';
+                $wtype = 'TEAM_OE'; $rtype = $side . '_' . $oe;
+            } elseif (strpos($enLower, '1st half') !== false || strpos($enLower, 'first half') !== false || $hasZh('上半场')) {
+                $wtype = 'HT_OE'; $rtype = $oe;
+            } else {
+                $wtype = 'OE'; $rtype = $oe;
+            }
+        }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+    // ---- 2nd-half Over/Under ----
+    if (preg_match('/(goals over\/under 2nd half|(2nd|second) half.*(total|over\/under|goal line)|over\/under.*(2nd|second) half)/', $enLower) || $hasZh('下半场大小')) {
+        $d = $ouDir(); $L = $outcomeLine !== null ? $outcomeLine : $extractNumber($ol);
+        if ($d !== null && $L !== null) { $wtype = '2H_OU'; $rtype = $d; $spread = $L; }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+    // ---- 2nd-half result / To Win 2nd Half ----
+    if (preg_match('/(second half result|2nd half (result|winner)|(to )?win 2nd half)/', $enLower) || $hasZh('下半场胜负') || $hasZh('赢下半场')) {
+        $r = $matchTeam($ol);
+        if ($r === null && preg_match('/(draw|平|和|^x$)/iu', $olLower)) $r = 'D';
+        if ($r === 'H' || $r === 'C' || $r === 'D') { $wtype = '2H_ML'; $rtype = $r; }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+
+    // ---- Team goals Over/Under ("Home Team Goals", "Total - Home", ...) ----
+    if (preg_match('/(home team goals|away team goals|total\s*-\s*(home|away)|(home|away) team total)/', $enLower)
+        || $hasZh('主队进球') || $hasZh('客队进球')) {
+        $side = (strpos($enLower, 'home') !== false || $hasZh('主队')) ? 'H'
+              : ((strpos($enLower, 'away') !== false || $hasZh('客队')) ? 'C' : null);
+        $d = $ouDir(); $L = $outcomeLine !== null ? $outcomeLine : $extractNumber($ol);
+        if ($side !== null && $d !== null && $L !== null) { $wtype = 'TEAM_OU'; $rtype = $side . '_' . $d; $spread = $L; }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+
+    // ---- Highest scoring half (full match only; team variants → manual) ----
+    if ((strpos($enLower, 'highest scoring half') !== false || $hasZh('进球最多半场') || $hasZh('高比分半场'))
+        && strpos($enLower, 'home') === false && strpos($enLower, 'away') === false && !$hasZh('主队') && !$hasZh('客队')) {
+        $src = $outcomeField !== '' ? strtolower($outcomeField) : $olLower;
+        if (preg_match('/(1st|first|上半场|^1$)/iu', $src))         { $wtype = 'HIGH_HALF'; $rtype = '1ST'; }
+        elseif (preg_match('/(2nd|second|下半场|^2$)/iu', $src))    { $wtype = 'HIGH_HALF'; $rtype = '2ND'; }
+        elseif (preg_match('/(equal|tie|draw|相等|平|^x$)/iu', $src)) { $wtype = 'HIGH_HALF'; $rtype = 'EQUAL'; }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+    // ---- Win both halves ----
+    if (strpos($enLower, 'win both halves') !== false || $hasZh('两半场全胜') || $hasZh('两半场均胜') || $hasZh('两个半场全胜')) {
+        $r = $matchTeam($ol); if ($r === 'H' || $r === 'C') { $wtype = 'WIN_BOTH'; $rtype = $r; }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+    // ---- Win either half ----
+    if (strpos($enLower, 'win either half') !== false || $hasZh('任一半场获胜')) {
+        $r = $matchTeam($ol); if ($r === 'H' || $r === 'C') { $wtype = 'WIN_EITH'; $rtype = $r; }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+    // ---- Team to score in 2nd half (Home/Away Team Score A Goal (2nd Half)) ----
+    if (preg_match('/(home|away) team score a goal.*(2nd half|second half)/', $enLower) || $hasZh('主队下半场进球') || $hasZh('客队下半场进球')) {
+        $side = (strpos($enLower, 'home') !== false || $hasZh('主队')) ? 'H' : 'C';
+        $yn = $ynDir(); $wtype = 'TSCORE_2H'; $rtype = $side . '_' . ($yn !== null ? $yn : 'Y');
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+    // ---- Team to score in BOTH halves ----
+    if (strpos($enLower, 'score in both halves') !== false || $hasZh('两半场均进球') || $hasZh('两半场都进球') || $hasZh('两个半场都进球')) {
+        $side = (strpos($enLower, 'home') !== false || $hasZh('主队')) ? 'H'
+              : ((strpos($enLower, 'away') !== false || $hasZh('客队')) ? 'C' : $matchTeam($ol));
+        $yn = $ynDir();
+        if ($side === 'H' || $side === 'C') { $wtype = 'SCR_BOTH'; $rtype = $side . '_' . ($yn !== null ? $yn : 'Y'); }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+    // ---- Win to nil (BEFORE clean sheet: Chinese 零封获胜 contains 零封) ----
+    if (strpos($enLower, 'win to nil') !== false || $hasZh('零封获胜')) {
+        $side = $matchTeam($ol);
+        if ($side === null) { if (strpos($enLower, 'home') !== false || $hasZh('主队')) $side = 'H'; elseif (strpos($enLower, 'away') !== false || $hasZh('客队')) $side = 'C'; }
+        $yn = $ynDir();
+        if ($side === 'H' || $side === 'C') { $wtype = 'WIN_TO_NIL'; $rtype = $side . '_' . ($yn !== null ? $yn : 'Y'); }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
+    // ---- Clean sheet (Home/Away) ----
+    if ((strpos($enLower, 'clean sheet') !== false || $hasZh('零封')) && strpos($enLower, 'win to nil') === false) {
+        $side = (strpos($enLower, 'home') !== false || $hasZh('主队') || $hasZh('主')) ? 'H'
+              : ((strpos($enLower, 'away') !== false || $hasZh('客队') || $hasZh('客')) ? 'C' : $matchTeam($ol));
+        $yn = $ynDir();
+        if ($side === 'H' || $side === 'C') { $wtype = 'CLN_SHEET'; $rtype = $side . '_' . ($yn !== null ? $yn : 'Y'); }
+        return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
+    }
 
     if (in_array($enLower, ['ml','1x2','match winner','match result','full time result'], true)) {
         $wtype = 'ML';
@@ -1794,9 +2344,19 @@ function parseSettlementHints(
     } elseif (strpos($enLower, 'both teams to score') !== false) {
         $wtype = 'BTS';
         $rtype = preg_match('/(yes|是)/iu', $olLower) ? 'Y' : 'N';
-    } elseif (strpos($enLower, 'correct score') !== false) {
-        $wtype = 'CS';
+    } elseif (strpos($enLower, 'correct score') !== false
+              || strpos($enLower, 'final score') !== false
+              || strpos($enLower, 'exact score') !== false) {
+        // 波胆: full-time settles on the final score (CS); the half-time grid
+        // (上半场波胆 — "Correct Score (1st Half)" / "... 1st Half") settles on
+        // the halftime score (HT_CS, graded against $hHt/$cHt in gradeBet).
+        $isHtCs = (strpos($enLower, '1st half') !== false
+                   || strpos($enLower, 'first half') !== false
+                   || strpos($enLower, '(1st') !== false
+                   || preg_match('/\bht\b/', $enLower));
+        $wtype = $isHtCs ? 'HT_CS' : 'CS';
         if (preg_match('/(\d+)\s*[-:：]\s*(\d+)/', $ol, $m)) $rtype = $m[1] . ':' . $m[2];
+        elseif (preg_match('/(\d+)\s*[-:：]\s*(\d+)/', $outcomeField, $m)) $rtype = $m[1] . ':' . $m[2];
     }
     return ['wtype' => $wtype, 'rtype' => $rtype, 'spread' => $spread, 'marketEn' => $en];
 }
@@ -2536,16 +3096,20 @@ function locateMarketLine(array $markets, string $marketName, string $outcomeFie
         $matchesName     = ($marketId === '' && strcasecmp($mname, $marketName) === 0);
         if (!$matchesId && !$matchesSemantic && !$matchesName) continue;
         $rows = is_array($m['odds'] ?? null) ? $m['odds'] : [];
+        // Two-pass hdp/line match: pass 1 requires an EXACT signed line match,
+        // pass 2 falls back to MAGNITUDE.  A synthesized ±0.25 ladder (Model B)
+        // at line 0 carries two rungs of equal magnitude (∓0.25); the exact pass
+        // resolves the rung the punter actually clicked, the fallback preserves
+        // legacy single-line / home-away sign-convention matching.  `outcomeField`
+        // (home/away/over/under) disambiguates the side; both legs submit the
+        // home-perspective hdp.
+        foreach (($outcomeLine !== null ? [true, false] : [false]) as $__exact) {
         foreach ($rows as $r) {
             if (!is_array($r)) continue;
-            // For Spread/Totals/Spread HT/Totals HT, the hdp/line must match
-            // when caller provides one.  Compare MAGNITUDES only: the home
-            // leg submits the signed home line (e.g. -0.75) while the away
-            // leg submits its negation (+0.75); both refer to the same row
-            // whose hdp carries the home-perspective sign.  `outcomeField`
-            // (home/away/over/under) already disambiguates which side.
             if ($outcomeLine !== null && isset($r['hdp'])) {
-                if (abs(abs((float)$r['hdp']) - abs($outcomeLine)) > 0.001) continue;
+                $__rh = (float)$r['hdp'];
+                if ($__exact) { if (abs($__rh - $outcomeLine) > 0.001) continue; }
+                else          { if (abs(abs($__rh) - abs($outcomeLine)) > 0.001) continue; }
             }
             // Direct field hit (home/away/draw/over/under/yes/no)
             if ($outcomeField !== '' && isset($r[$outcomeField]) && (float)$r[$outcomeField] > 0) {
@@ -2567,6 +3131,23 @@ function locateMarketLine(array $markets, string $marketName, string $outcomeFie
                     ];
                 }
             }
+            // Selection match — passthrough correct-score rows carry the
+            // scoreline in `selection` ("1:0") with the price in `price`.
+            // The H5 frontend posts outcome_field as the same scoreline;
+            // accept either ":" or "-" separator (波胆 / 上半场波胆).
+            $sel = strtolower((string)($r['selection'] ?? ''));
+            if ($sel !== '' && $outcomeField !== ''
+                && str_replace('-', ':', $sel) === str_replace('-', ':', $outcomeField)) {
+                $price = (float)($r['price'] ?? $r['odds'] ?? 0);
+                if ($price > 0) {
+                    return [
+                        'price'       => $price,
+                        'market_name' => $marketName,
+                        'outcome'     => (string)($r['selection']),
+                    ];
+                }
+            }
+        }
         }
     }
     return null;

@@ -82,6 +82,19 @@ CREATE TABLE IF NOT EXISTS leagues (
 """
 
 
+# Process-lifetime memo for name->id so the hot snapshot-build path (called
+# per team per event ON THE EVENT LOOP via normalize_event -> _gs_team_lookup)
+# does not open a fresh SQLite connection + run the CREATE-IF-NOT-EXISTS init
+# script on EVERY lookup.  Positive hits are immutable (a team's goalserve id
+# never changes) so they are cached indefinitely; misses are cached for a short
+# TTL so a team added by a later poll still resolves within one TTL window.
+# dict get/set is atomic under the GIL, so sharing between the event loop and
+# the threadpool needs no explicit lock.
+_LOOKUP_MEMO: "dict[str, tuple[float, int | None]]" = {}
+_LOOKUP_MEMO_LEAGUE: "dict[str, tuple[float, int | None]]" = {}
+_LOOKUP_NEG_TTL = float(os.environ.get("GS_TD_NEG_TTL", "600"))
+
+
 def _open_db() -> sqlite3.Connection:
     GS_TD_DB.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(GS_TD_DB, timeout=5.0)
@@ -100,40 +113,52 @@ def lookup(name: str) -> "int | None":
     """
     if not name:
         return None
+    key = name.strip()
+    _ent = _LOOKUP_MEMO.get(key)
+    if _ent is not None and (_ent[1] is not None or time.time() < _ent[0]):
+        return _ent[1]
     try:
         conn = _open_db()
         try:
             cur = conn.execute(
                 "SELECT id FROM teams WHERE name = ? ORDER BY last_seen DESC LIMIT 1",
-                (name.strip(),),
+                (key,),
             )
             row = cur.fetchone()
-            return int(row[0]) if row else None
+            val = int(row[0]) if row else None
         finally:
             conn.close()
     except sqlite3.Error as e:
         log.warning("lookup(%r) sqlite error: %s", name, e)
         return None
+    _LOOKUP_MEMO[key] = (time.time() + _LOOKUP_NEG_TTL, val)
+    return val
 
 
 def lookup_league(name: str) -> "int | None":
     """Return the goalserve numeric league id for `name`, or None."""
     if not name:
         return None
+    key = name.strip()
+    _ent = _LOOKUP_MEMO_LEAGUE.get(key)
+    if _ent is not None and (_ent[1] is not None or time.time() < _ent[0]):
+        return _ent[1]
     try:
         conn = _open_db()
         try:
             cur = conn.execute(
                 "SELECT id FROM leagues WHERE name = ? ORDER BY last_seen DESC LIMIT 1",
-                (name.strip(),),
+                (key,),
             )
             row = cur.fetchone()
-            return int(row[0]) if row else None
+            val = int(row[0]) if row else None
         finally:
             conn.close()
     except sqlite3.Error as e:
         log.warning("lookup_league(%r) sqlite error: %s", name, e)
         return None
+    _LOOKUP_MEMO_LEAGUE[key] = (time.time() + _LOOKUP_NEG_TTL, val)
+    return val
 
 
 def upsert_inline(
@@ -366,7 +391,7 @@ class GoalserveTeamDirectory:
         """
         t0 = time.time()
         # Derive the soccernew base from self.url so an override still works.
-        base = re.sub(r"/soccernew/[^/?]*.*$", "/soccernew/", self.url)
+        base = _re.sub(r"/soccernew/[^/?]*.*$", "/soccernew/", self.url)
         if not base.endswith("/soccernew/"):
             base = self.url  # non-standard override: fall back to single fetch
             suffixes = [""]
@@ -425,6 +450,16 @@ import re as _re
 
 _NORMAL_CACHE: "dict[str, int] | None" = None
 
+# National-team / common name variants whose normalised form differs from the
+# canonical name Goalserve uses in its schedule (soccernew) feed.  The in-play
+# feed sometimes reports an alternate spelling (e.g. "Czechia") while the team
+# directory only ever stored the schedule-feed name ("Czech Republic" -> id
+# 8460), so name->id lookup misses and the crest falls back to initials.  Keys
+# AND values are already-normalised forms (lower-case, no whitespace/punct).
+_NAME_ALIASES = {
+    "czechia": "czechrepublic",
+}
+
 
 def _normalize_team_name(name: str) -> str:
     if not name:
@@ -436,7 +471,7 @@ def _normalize_team_name(name: str) -> str:
     s = _re.sub(r"\s+(fc|cf|ec|fk|sk|sc|ac|cd|kc|nk|hk|cs|sa|cp|pfc|mfc|tc|rk|kfc|cfc|csf)\s*$", "", s)
     # strip all whitespace + punctuation so "St. Pauli" matches "St Pauli"
     s = _re.sub(r"[\s\._\-]+", "", s)
-    return s
+    return _NAME_ALIASES.get(s, s)
 
 
 def _build_normal_cache() -> "dict[str, int]":

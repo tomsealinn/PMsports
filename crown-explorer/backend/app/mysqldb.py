@@ -543,6 +543,16 @@ def derive_status(row: dict, snap: "dict | None" = None) -> str:
         if snap_status == "finished" or snap.get("is_finished"):
             return "settled"
 
+    # Unknown / zero kickoff (Crown never populated foot_match.datetime) with
+    # no live snap to prove the match is on the pitch: status=1 alone is a
+    # stale Crown flag, and the LIVE_WINDOW sweeper below can't catch it
+    # because `age` is undefined when ts<=0.  Without this guard such rows
+    # masquerade as inplay forever (e.g. a match that finished yesterday but
+    # was never settled, datetime never written) — they surface on 滚球 with
+    # no kickoff/clock/phase.  Treat as settled so they leave the live list.
+    if ts <= 0 and snap is None:
+        return "settled"
+
     # Zombie sweeper: Crown says still-active but kickoff > LIVE_WINDOW
     # ago and no settlement landed.  Treat as settled so /events?only_active=true
     # excludes them and the frontend doesn't pick one as selectedMatch.

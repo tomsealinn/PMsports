@@ -358,7 +358,80 @@ def _load_full_market_book(event_id: int) -> list[dict]:
     return out
 
 
-def _canonical_markets_from_main_odds(mo: "dict | None") -> list[dict]:
+# ---------------------------------------------------------------------------
+# Model B — in-play Asian-Handicap neighbour synthesis.
+#
+# Goalserve's live feed carries a SINGLE handicap line per tick, so the 让球
+# card shows just one rung (e.g. -0.25).  To present the conventional 3-line
+# ladder (live ±0.25) we synthesise the two neighbours from the live prices
+# using a FIXED empirical step table (no probability model), then floor the
+# result to the odds ladder so synthetic prices are always house-favourable.
+# The transform is deterministic, so the PHP validator (which re-fetches this
+# same endpoint) reproduces identical neighbour prices and the bet validates /
+# settles through the existing Spread (SP) path.
+#
+# Direction: raising the handicap (more negative for home) makes home HARDER
+# to cover → home odds lengthen, away odds shorten; lowering it is the mirror.
+_AH_STEP_FACTORS = [
+    # (price_upper_bound, shorten_factor (<1), lengthen_factor (>1))
+    (1.50, 0.94, 1.07),
+    (2.00, 0.90, 1.12),
+    (3.00, 0.86, 1.18),
+    (5.00, 0.82, 1.25),
+    (1e9,  0.78, 1.30),
+]
+
+
+def _ah_factors(price: float) -> "tuple[float, float]":
+    for ub, sh, lg in _AH_STEP_FACTORS:
+        if price <= ub:
+            return sh, lg
+    return 0.78, 1.30
+
+
+def _snap_down_odds(p: float) -> float:
+    """Floor a decimal price to the standard odds ladder (house-favourable)."""
+    if p <= 1.01:
+        return 1.01
+    if p <= 2.0:    step = 0.01
+    elif p <= 3.0:  step = 0.05
+    elif p <= 5.0:  step = 0.10
+    elif p <= 10.0: step = 0.25
+    elif p <= 20.0: step = 0.5
+    else:           step = 1.0
+    v = int(p / step + 1e-9) * step
+    return round(max(v, 1.01), 2)
+
+
+def _synth_ah_neighbors(line: float, home: float, away: float) -> list[dict]:
+    """Return 3 Spread rows [{hdp,home,away}] for line-0.25 / line / line+0.25.
+    The middle rung keeps the real live prices; the neighbours are stepped via
+    _AH_STEP_FACTORS and floored to the ladder."""
+    h_sh, h_lg = _ah_factors(home)
+    a_sh, a_lg = _ah_factors(away)
+    lo = {  # line-0.25: home easier (shorter), away harder (longer)
+        "hdp":  round(line - 0.25, 2),
+        "home": _snap_down_odds(home * h_sh),
+        "away": _snap_down_odds(away * a_lg),
+    }
+    mid = {"hdp": round(line, 2), "home": round(home, 2), "away": round(away, 2)}
+    hi = {  # line+0.25: home harder (longer), away easier (shorter)
+        "hdp":  round(line + 0.25, 2),
+        "home": _snap_down_odds(home * h_lg),
+        "away": _snap_down_odds(away * a_sh),
+    }
+    # Preserve monotonicity if ladder-snapping collided at very short prices,
+    # never letting a synthesized price fall below the 1.01 floor.
+    if not (lo["home"] < mid["home"] < hi["home"]):
+        lo["home"] = round(max(1.01, min(lo["home"], mid["home"] - 0.01)), 2)
+        hi["home"] = round(max(hi["home"], mid["home"] + 0.01), 2)
+    if not (lo["away"] > mid["away"] > hi["away"]):
+        lo["away"] = round(max(lo["away"], mid["away"] + 0.01), 2)
+        hi["away"] = round(max(1.01, min(hi["away"], mid["away"] - 0.01)), 2)
+    return [lo, mid, hi]
+
+
+def _canonical_markets_from_main_odds(mo: "dict | None", synth_neighbors: bool = False) -> list[dict]:
     """Project a live snapshot's pre-computed ``main_odds`` (9-column shape)
     into the canonical market-list shape that ``parse_rcn_markets`` emits and
     that the PHP place-bet validator (``locateMarketLine``) + the H5 detail
@@ -410,7 +483,13 @@ def _canonical_markets_from_main_odds(mo: "dict | None") -> list[dict]:
     if _p(mo.get("m_h")):
         add("ML", [{"home": _p(mo.get("m_h")), "draw": _p(mo.get("m_n")), "away": _p(mo.get("m_c"))}])
     if _p(mo.get("re_h")) and _p(mo.get("re_c")):
-        add("Spread", [{"hdp": _h(mo.get("re_line")), "home": _p(mo.get("re_h")), "away": _p(mo.get("re_c"))}])
+        _re_line = _h(mo.get("re_line"))
+        _re_h, _re_c = _p(mo.get("re_h")), _p(mo.get("re_c"))
+        if synth_neighbors:
+            # Model B: live ±0.25 ladder (3 rungs) for in-play 让球.
+            add("Spread", _synth_ah_neighbors(_re_line, _re_h, _re_c))
+        else:
+            add("Spread", [{"hdp": _re_line, "home": _re_h, "away": _re_c}])
     if _p(mo.get("ou_over")) and _p(mo.get("ou_under")):
         add("Totals", [{"hdp": _h(mo.get("ou_line")), "over": _p(mo.get("ou_over")), "under": _p(mo.get("ou_under"))}])
     if _p(mo.get("ht_h")):
@@ -881,6 +960,275 @@ def _filter_decided_goalscorer(event: dict, markets: list[dict]) -> list[dict]:
     return out
 
 
+def _filter_decided_ht_ft(event: dict, markets: list[dict]) -> list[dict]:
+    """Drop Half-Time/Full-Time combo outcomes whose half-time leg can no
+    longer happen.
+
+    Each HT/FT outcome is a ``HT/FT`` pair (raw ``selection`` like ``1/1``,
+    ``x/1``, ``2/x`` — first token = half-time result: 1=home, x=draw,
+    2=away; second = full-time result).  Once the half-time score is known
+    (``score_home_ht`` / ``score_away_ht`` populated, which Goalserve only
+    sends at/after HT), every outcome whose HT leg disagrees with the actual
+    HT result is impossible and is dropped.  The full-time leg is still
+    undecided, so the market itself stays bookable (e.g. a 0-0 half keeps
+    only the ``x/*`` rows).  Mirrors the per-row drop pattern of
+    ``_filter_decided_goalscorer``.
+    """
+    if not markets:
+        return markets
+    sh_ht = event.get("score_home_ht")
+    sa_ht = event.get("score_away_ht")
+    if sh_ht is None or sa_ht is None:
+        return markets
+    try:
+        sh_ht, sa_ht = int(sh_ht), int(sa_ht)
+    except (TypeError, ValueError):
+        return markets
+    ht_leg = "1" if sh_ht > sa_ht else ("2" if sh_ht < sa_ht else "x")
+    out: list[dict] = []
+    for m in markets:
+        if not isinstance(m, dict):
+            out.append(m)
+            continue
+        name = (m.get("market_name") or m.get("name") or "").strip().lower()
+        if name not in ("half time/full time", "halftime/fulltime",
+                        "half-time/full-time", "ht/ft"):
+            out.append(m)
+            continue
+        odds = m.get("odds") or []
+        kept: list = []
+        for r in odds:
+            if not isinstance(r, dict):
+                kept.append(r)
+                continue
+            sel = str(r.get("selection") or r.get("label")
+                      or r.get("score") or "").strip().lower()
+            leg = sel.split("/", 1)[0].strip() if "/" in sel else ""
+            if leg in ("1", "x", "2") and leg != ht_leg:
+                continue  # half-time leg can no longer happen
+            kept.append(r)
+        if not kept:
+            continue
+        if len(kept) != len(odds):
+            m = {**m, "odds": kept}
+        out.append(m)
+    return out
+
+
+_NTH_GOAL_RE = re.compile(r"which team will score the\s+(\d+)(?:st|nd|rd|th)\s+goal", re.I)
+
+
+def _norm_mkt_name(m: dict) -> str:
+    """Lowercased market name with collapsed internal whitespace (some
+    Goalserve names carry a stray double space, e.g.
+    'Home Team  to Score in Both Halves')."""
+    return _NAME_WS_RE.sub(" ", (m.get("market_name") or m.get("name") or "").strip().lower())
+
+
+def _sel_of(r: object) -> str:
+    """Lowercased outcome selection label."""
+    if not isinstance(r, dict):
+        return ""
+    return str(r.get("selection") or r.get("label") or r.get("score") or "").strip().lower()
+
+
+def _drop_selections(m: dict, dead) -> "dict | None":
+    """Return a copy of market `m` with outcome rows whose selection is in
+    `dead` removed.  Returns None when every row would be dropped (caller
+    should drop the whole market) and the original `m` when nothing changed.
+    `dead` may be a set of exact selections or a predicate callable."""
+    odds = m.get("odds") or []
+    pred = dead if callable(dead) else (lambda s: s in dead)
+    kept = [r for r in odds if not (isinstance(r, dict) and pred(_sel_of(r)))]
+    if not kept:
+        return None
+    if len(kept) == len(odds):
+        return m
+    return {**m, "odds": kept}
+
+
+def _filter_decided_result_btts(event: dict, markets: list[dict]) -> list[dict]:
+    """Result / Both-Teams-To-Score combo ('1/yes', 'x/no', ...): once BOTH
+    teams have scored, BTTS=Yes is locked, so every '*/no' outcome is dead.
+    The 1X2 leg is undecided until full time, so the '*/yes' rows stay."""
+    if not markets:
+        return markets
+    try:
+        sh, sa = int(event.get("score_home")), int(event.get("score_away"))
+    except (TypeError, ValueError):
+        return markets
+    if sh <= 0 or sa <= 0:
+        return markets  # BTTS not yet locked
+    out: list[dict] = []
+    for m in markets:
+        if not isinstance(m, dict) or _norm_mkt_name(m) != "result / both teams to score":
+            out.append(m)
+            continue
+        nm = _drop_selections(m, lambda s: s.endswith("/no"))
+        if nm is not None:
+            out.append(nm)
+    return out
+
+
+def _filter_decided_2h_yesno(event: dict, markets: list[dict]) -> list[dict]:
+    """Drop the impossible leg of 2nd-half scoring Yes/No markets once the
+    half-time score is known: a team that has scored after HT locks 'yes'
+    (drop 'no').  Needs both the full-time and half-time scores."""
+    if not markets:
+        return markets
+    try:
+        sh, sa = int(event.get("score_home")), int(event.get("score_away"))
+        hh, ha = int(event.get("score_home_ht")), int(event.get("score_away_ht"))
+    except (TypeError, ValueError):
+        return markets
+    h2_home, h2_away = sh - hh, sa - ha
+    out: list[dict] = []
+    for m in markets:
+        if not isinstance(m, dict):
+            out.append(m)
+            continue
+        name = _norm_mkt_name(m)
+        if name == "home team score a goal (2nd half)" and h2_home > 0:
+            drop = "no"
+        elif name == "away team score a goal (2nd half)" and h2_away > 0:
+            drop = "no"
+        elif name == "both teams to score (2nd half)" and h2_home > 0 and h2_away > 0:
+            drop = "no"
+        else:
+            out.append(m)
+            continue
+        nm = _drop_selections(m, {drop})
+        if nm is not None:
+            out.append(nm)
+    return out
+
+
+def _filter_decided_both_halves(event: dict, markets: list[dict]) -> list[dict]:
+    """'<Team> to Score in Both Halves' Yes/No: once HT is known, a team that
+    was scoreless at the break can never satisfy Yes (drop 'yes'); a team
+    that has scored in BOTH halves locks Yes (drop 'no')."""
+    if not markets:
+        return markets
+    try:
+        sh, sa = int(event.get("score_home")), int(event.get("score_away"))
+        hh, ha = int(event.get("score_home_ht")), int(event.get("score_away_ht"))
+    except (TypeError, ValueError):
+        return markets
+
+    def _drop_for(team_ht: int, team_2h: int) -> "str | None":
+        if team_ht <= 0:
+            return "yes"   # no first-half goal -> both-halves impossible
+        if team_2h > 0:
+            return "no"    # scored in both halves -> Yes locked
+        return None
+
+    out: list[dict] = []
+    for m in markets:
+        if not isinstance(m, dict):
+            out.append(m)
+            continue
+        name = _norm_mkt_name(m)
+        if name == "home team to score in both halves":
+            drop = _drop_for(hh, sh - hh)
+        elif name == "away team to score in both halves":
+            drop = _drop_for(ha, sa - ha)
+        else:
+            out.append(m)
+            continue
+        if drop is None:
+            out.append(m)
+            continue
+        nm = _drop_selections(m, {drop})
+        if nm is not None:
+            out.append(nm)
+    return out
+
+
+def _filter_decided_nth_goal(event: dict, markets: list[dict]) -> list[dict]:
+    """'Which team will score the Nth goal?' is fully decided the moment N
+    goals have been scored (the Nth-goal event has happened).  We don't carry
+    the goal sequence here, so we can't say *which* team — drop the whole
+    settled market, which removes the guaranteed-loss legs."""
+    if not markets:
+        return markets
+    try:
+        total = int(event.get("score_home")) + int(event.get("score_away"))
+    except (TypeError, ValueError):
+        return markets
+    if total <= 0:
+        return markets
+    out: list[dict] = []
+    for m in markets:
+        if not isinstance(m, dict):
+            out.append(m)
+            continue
+        mt = _NTH_GOAL_RE.search(_norm_mkt_name(m))
+        if mt and total >= int(mt.group(1)):
+            continue  # Nth goal already scored -> decided
+        out.append(m)
+    return out
+
+
+def _filter_decided_last_to_score(event: dict, markets: list[dict]) -> list[dict]:
+    """'Last Team to Score (3 way)': the 'draw' (= neither team scores) leg is
+    dead the moment any goal is scored.  Home/Away stay live because the last
+    scorer can still change."""
+    if not markets:
+        return markets
+    try:
+        total = int(event.get("score_home")) + int(event.get("score_away"))
+    except (TypeError, ValueError):
+        return markets
+    if total <= 0:
+        return markets
+    out: list[dict] = []
+    for m in markets:
+        if not isinstance(m, dict) or _norm_mkt_name(m) != "last team to score (3 way)":
+            out.append(m)
+            continue
+        nm = _drop_selections(m, {"draw"})
+        if nm is not None:
+            out.append(nm)
+    return out
+
+
+def _filter_decided_match_total(event: dict, markets: list[dict]) -> list[dict]:
+    """Match-total Over/Under ('Match Goals', 'Over/Under Line'): the book is
+    settled once the live total has crossed every listed line (Over
+    guaranteed, Under impossible).  These carry the line under `handicap`
+    (not `hdp`) and use names the canonical-totals filter doesn't match, so
+    handle them here.  Drop only when EVERY line is crossed (conservative for
+    multi-line books)."""
+    if not markets:
+        return markets
+    try:
+        total = int(event.get("score_home")) + int(event.get("score_away"))
+    except (TypeError, ValueError):
+        return markets
+    out: list[dict] = []
+    for m in markets:
+        if not isinstance(m, dict) or _norm_mkt_name(m) not in ("match goals", "over/under line"):
+            out.append(m)
+            continue
+        lines: list[float] = []
+        for r in (m.get("odds") or []):
+            if not isinstance(r, dict):
+                continue
+            ln = r.get("hdp")
+            if ln is None:
+                ln = r.get("handicap")
+            if ln is None:
+                continue
+            try:
+                lines.append(float(ln))
+            except (TypeError, ValueError):
+                pass
+        if lines and all(total > ln for ln in lines):
+            continue  # every line crossed -> Over decided, Under dead
+        out.append(m)
+    return out
+
+
 def _apply_decided_filters(event: dict, markets: list[dict]) -> list[dict]:
     """Run all in-play "already decided" filters in sequence.
 
@@ -893,6 +1241,13 @@ def _apply_decided_filters(event: dict, markets: list[dict]) -> list[dict]:
     markets = _filter_decided_total_markets(event, markets)
     markets = _filter_decided_goalscorer(event, markets)
     markets = _filter_impossible_correct_score(event, markets)
+    markets = _filter_decided_ht_ft(event, markets)
+    markets = _filter_decided_result_btts(event, markets)
+    markets = _filter_decided_2h_yesno(event, markets)
+    markets = _filter_decided_both_halves(event, markets)
+    markets = _filter_decided_nth_goal(event, markets)
+    markets = _filter_decided_last_to_score(event, markets)
+    markets = _filter_decided_match_total(event, markets)
     return markets
 
 
@@ -1094,6 +1449,151 @@ def _get_float(d: dict, key: str) -> float:
         return f if f > 0 else 0.0
     except (TypeError, ValueError):
         return 0.0
+
+
+# ---------------------------------------------------------------------------
+# Net-profit odds haircut
+#
+# Trims ~3% off the WINNINGS portion of every published decimal price:
+#     new = 1 + (old - 1) * ODDS_HAIRCUT_FACTOR
+# The result always stays > 1.0 (safe for short prices) and is never lifted
+# above the raw price, so the house edge is monotonic.
+#
+# Applied ONLY at the serving boundaries — the /events list + detail, the
+# /events/{id}/markets book, and the browser WebSocket fan-out — so every
+# surface the punter sees AND the PHP place-bet validator (which reads the
+# SAME /markets endpoint) stay in lockstep, and settlement (which uses the
+# stake-time stored odds) inherits the cut automatically.  Internal snapshots
+# / caches are left RAW; we only ever cut COPIES at egress, so a cached object
+# can never be cut twice (which would compound the haircut on every request).
+ODDS_HAIRCUT_FACTOR = 0.97
+
+# Decimal-odds price fields across every market-row shape emitted by the canon
+# projection (_canonical_markets_from_main_odds), the goalserve passthrough
+# (_passthrough_market / _canon_row) and the r_cn parser (parse_rcn_markets).
+# Handicap / line fields (hdp, handicap, *_line) and labels are NEVER cut.
+_HAIRCUT_PRICE_KEYS = frozenset({
+    "home", "draw", "away", "over", "under", "yes", "no", "price", "odds",
+})
+
+
+def _haircut_price(v):
+    """Net-profit haircut for a single decimal-odds value.  Non-numeric or
+    ``<= 1.0`` inputs pass through unchanged; the result is rounded to 2dp and
+    never rounds up to / below 1.0 (a short price stays > 1.0 and is never
+    lifted above the raw price)."""
+    try:
+        p = float(v)
+    except (TypeError, ValueError):
+        return v
+    if p <= 1.0:
+        return v
+    new = round(1.0 + (p - 1.0) * ODDS_HAIRCUT_FACTOR, 2)
+    return new if new > 1.0 else v
+
+
+def _is_cs_market(name: "str | None") -> bool:
+    """True for FT/HT correct-score markets (波胆)."""
+    s = (name or "").strip().lower()
+    return ("correct score" in s) or (s == "final score") or ("exact score" in s)
+
+
+def _cs_price(v):
+    """Correct-score price: 3% haircut + house-favourable rounding.
+    <100 -> 1 decimal place; >=100 -> 0 decimal places (floor, never round up)."""
+    try:
+        p = float(v)
+    except (TypeError, ValueError):
+        return v
+    if p <= 1.0:
+        return v
+    # Apply net-profit haircut first
+    hc = 1.0 + (p - 1.0) * ODDS_HAIRCUT_FACTOR
+    # House-favourable rounding (floor)
+    if hc < 100:
+        new = int(hc * 10) / 10.0  # floor to 1dp
+    else:
+        new = int(hc)  # floor to integer
+    return new if new > 1.0 else v
+
+
+def _haircut_market_rows(markets):
+    """Return a NEW market list with every decimal-odds price field hair-cut.
+    Builds fresh market + row dicts so a shared/cached snapshot object is never
+    mutated (which would compound the cut on the next request).
+    Correct-score markets (Final Score, Correct Score, etc.) use _cs_price
+    which applies the 3% haircut + house-favourable rounding (1dp if <100, 0dp if >=100)."""
+    if not markets:
+        return markets
+    out = []
+    for m in markets:
+        if not isinstance(m, dict) or not isinstance(m.get("odds"), list):
+            out.append(m)
+            continue
+        name = str(m.get("market_name") or m.get("name") or "")
+        is_cs = _is_cs_market(name)
+        new_rows = []
+        for r in m["odds"]:
+            if isinstance(r, dict):
+                nr = dict(r)
+                for k in _HAIRCUT_PRICE_KEYS:
+                    if k in nr:
+                        if is_cs:
+                            nr[k] = _cs_price(nr[k])
+                        else:
+                            nr[k] = _haircut_price(nr[k])
+                new_rows.append(nr)
+            else:
+                new_rows.append(r)
+        nm = dict(m)
+        nm["odds"] = new_rows
+        out.append(nm)
+    return out
+
+
+def _haircut_main_odds(mo):
+    """Return a NEW 9-column main_odds dict with every decimal-odds value
+    hair-cut.  ``*_line`` handicap keys are preserved verbatim; the ``cs``
+    scoreline list has each row's ``price`` formatted with _cs_price (3%
+    haircut + house-favourable rounding: 1dp if <100, 0dp if >=100)."""
+    if not isinstance(mo, dict):
+        return mo
+    out = {}
+    for k, v in mo.items():
+        if k == "cs" and isinstance(v, list):
+            out[k] = [
+                ({**r, "price": _cs_price(r.get("price"))}
+                 if isinstance(r, dict) else r)
+                for r in v
+            ]
+        elif k.endswith("_line"):
+            out[k] = v
+        elif isinstance(v, (int, float)) and not isinstance(v, bool):
+            out[k] = _haircut_price(v)
+        else:
+            out[k] = v
+    return out
+
+
+def _haircut_snap(snap):
+    """Return a shallow COPY of a browser-WS snapshot with its inline
+    ``main_odds`` (and any markets arrays) hair-cut, leaving the shared/queued
+    source object untouched so a fan-out / replay can't double-cut it."""
+    if not isinstance(snap, dict):
+        return snap
+    out = dict(snap)
+    if isinstance(snap.get("main_odds"), dict):
+        out["main_odds"] = _haircut_main_odds(snap["main_odds"])
+    for mk in ("markets", "_markets"):
+        if isinstance(snap.get(mk), list):
+            out[mk] = _haircut_market_rows(snap[mk])
+    if isinstance(snap.get("bookmakers"), list):
+        out["bookmakers"] = [
+            ({**bm, "markets": _haircut_market_rows(bm.get("markets"))}
+             if isinstance(bm, dict) and isinstance(bm.get("markets"), list) else bm)
+            for bm in snap["bookmakers"]
+        ]
+    return out
 
 
 def _load_rcn_markets(event_ids: list[int]) -> "dict[int, list[dict]]":
@@ -1797,6 +2297,9 @@ def list_events(
     # same-match duplicate to collapse — and we never risk deleting a
     # legitimate independent row by fuzzy name match.  `_dedup_same_match`
     # is kept as dead code; re-enable only if a concrete case needs it.
+    for _r in rows:
+        if isinstance(_r.get("main_odds"), dict):
+            _r["main_odds"] = _haircut_main_odds(_r["main_odds"])
     return {"total": total, "items": rows}
 
 
@@ -1813,7 +2316,10 @@ def get_event(event_id: int) -> dict:
     if not raw:
         gs = _goalserve_event_full(event_id)
         if gs:
-            return {k: v for k, v in gs.items() if not k.startswith("_")}
+            ev = {k: v for k, v in gs.items() if not k.startswith("_")}
+            if isinstance(ev.get("main_odds"), dict):
+                ev["main_odds"] = _haircut_main_odds(ev["main_odds"])
+            return ev
         raise HTTPException(status_code=404, detail="event not found")
     row = _mysql_row_to_event(raw)
     # Normalise BEFORE main-odds projection so `_apply_decided_filters`
@@ -1836,6 +2342,8 @@ def get_event(event_id: int) -> dict:
     mo_map = _batch_main_odds([row["id"]], rows_by_id)
     mo = mo_map.get(row["id"])
     row["main_odds"] = mo if mo and any(mo.values()) else None
+    if isinstance(row.get("main_odds"), dict):
+        row["main_odds"] = _haircut_main_odds(row["main_odds"])
     ex_map = _batch_extra_markets([row["id"]], rows_by_id)
     row["extra_markets"] = ex_map.get(row["id"], [])
     _attach_cn([row])
@@ -1879,6 +2387,14 @@ def list_markets(event_id: int) -> dict:
                 ev["status"] = "closed"
                 return {"event": ev, "bookmakers": [], "total_markets": 0, "source": "closed"}
             gmarkets = gs.get("_markets") or []
+            # Apply the in-play "already decided" outcome/market filters here
+            # too: this Goalserve-snapshot fallback (no foot_match row) serves
+            # the raw book, which otherwise bypasses every decided filter —
+            # leaving dead legs (settled HT/FT, decided totals, Nth-goal, …)
+            # bookable for matches that exist only under their live GS gid.
+            if not finished:
+                gmarkets = _apply_decided_filters(ev, gmarkets)
+                gmarkets = _haircut_market_rows(gmarkets)
             bms = [] if finished else [{
                 "bookmaker": gs.get("_bm") or "bet365",
                 "markets": gmarkets,
@@ -1930,7 +2446,7 @@ def list_markets(event_id: int) -> dict:
             # In-play: main_odds from the live /dev/shm snapshot; drop twins by
             # the Goalserve inplay market-id map (GS_CANON).
             snap = _read_shm_cache(event_id)
-            canon = _canonical_markets_from_main_odds((snap or {}).get("main_odds"))
+            canon = _canonical_markets_from_main_odds((snap or {}).get("main_odds"), synth_neighbors=True)
             if canon:
                 try:
                     from ..goalserve_inplay import GS_CANON as _GS_CANON
@@ -1967,6 +2483,7 @@ def list_markets(event_id: int) -> dict:
                     return (cname in emitted) or (str(m.get("market_id") or "") in canon_ids)
                 extras = [m for m in full if not _is_pre_twin(m)]
                 full = canon + extras
+        full = _haircut_market_rows(full)
         return {
             "event":         event,
             "bookmakers":    [{"bookmaker": "Bet365", "markets": full, "market_count": len(full)}],
@@ -1998,6 +2515,7 @@ def list_markets(event_id: int) -> dict:
                 })
         if markets:
             markets = _apply_decided_filters(event, markets)
+            markets = _haircut_market_rows(markets)
             bookmakers = [{"bookmaker": bookie, "markets": markets, "market_count": len(markets)}]
             return {
                 "event":         event,
@@ -2020,6 +2538,7 @@ def list_markets(event_id: int) -> dict:
     )
     markets = parse_rcn_markets((xml_row or {}).get("r_cn") or "")
     markets = _apply_decided_filters(event, markets)
+    markets = _haircut_market_rows(markets)
     # Source label drives the H5 frontend's bookability gate:
     # `stalePrematch = isInplay && source !== "ws_live"` locks in-play bets.
     # goalserve_dbwriter refreshes r_cn with
@@ -2166,6 +2685,8 @@ async def ws_endpoint(
                 if filter_ids is not None and str(msg.get("id") or "") not in filter_ids:
                     continue
                 msg = dict(msg)
+                if isinstance(msg.get("snap"), dict):
+                    msg["snap"] = _haircut_snap(msg["snap"])
                 msg["server_ts"] = int(time.time() * 1000)
                 await ws.send_json(msg)
 
@@ -2225,7 +2746,7 @@ _LOGO_UPSTREAM = _logo_os.environ.get(
     "http://data2.goalserve.com:8084/api/v1/logotips/soccer",
 )
 _LOGO_API_KEY = _logo_os.environ.get("GS_API_KEY", "3416f409c2584c9e081c08debf8ab4bb")
-_LOGO_CATEGORIES = {"teams", "leagues", "players"}
+_LOGO_CATEGORIES = {"teams", "leagues", "players", "playerphoto"}
 _LOGO_HTTP_TIMEOUT = float(_logo_os.environ.get("LOGO_HTTP_TIMEOUT", "8"))
 
 
@@ -2287,6 +2808,32 @@ def _logo_fetch(cat: str, gid: int) -> "bytes | None":
     return png
 
 
+def _logo_fetch_player_photo(pid: int) -> "bytes | None":
+    """Player headshot from Goalserve's player-profile feed
+    (`soccerstats/player/{id}` -> <image>base64 PNG</image>).  The logotips
+    `players` category is rate-limited/empty on our key, but the profile feed
+    carries a reliable photo.   Cached in /dev/shm via _gs_feed_get."""
+    import base64 as _b64
+    import re as _re2
+    raw = _gs_feed_get(f"soccerstats/player/{int(pid)}", ttl=604800)   # 7d
+    if not raw:
+        return None
+    try:
+        text = raw.decode("utf-8", "ignore")
+    except Exception:  # noqa: BLE001
+        return None
+    m = _re2.search(r"<image>\s*([^<\s][^<]*?)\s*</image>", text)
+    if not m:
+        return None
+    try:
+        png = _b64.b64decode(m.group(1).strip(), validate=False)
+    except Exception:  # noqa: BLE001
+        return None
+    if not png or png[:8] != b"\x89PNG\r\n\x1a\n":
+        return None
+    return png
+
+
 @router.get("/events/{event_id}/inplay-events")
 def event_inplay_events(event_id: str) -> dict:
     """Goalserve-derived live event timeline.   Reads the cached snapshot
@@ -2315,6 +2862,546 @@ def event_inplay_events(event_id: str) -> dict:
         "away": snap.get("away"),
         "events": events,
     }
+
+
+# ===========================================================================
+# Goalserve match-info panels:  标准的 standings / lineups / h2h / timeline
+# powered by two getfeed endpoints (cached in /dev/shm):
+#   * standings/{leagueId}.xml                        → 积分榜
+#   * soccerfixtures/league/{leagueId}?date_start..   → 阵容 / 时间线 / 交锋历史
+# leagueId is derived from foot_match.lid (lid − GS_LID_BASE).  Every
+# endpoint returns the EXACT shape the H5 modal renderers already expect
+# and degrades to {ok:True, mapped:False} (never 500) so the pane shows its
+# graceful "暂无…" placeholder when data is missing.
+# ===========================================================================
+_GS_FEED_KEY  = _os.environ.get("GS_API_KEY", "3416f409c2584c9e081c08debf8ab4bb")
+_GS_FEED_BASE = _os.environ.get("GS_FEED_BASE", "http://www.goalserve.com/getfeed")
+_GS_FEED_CACHE = _pathlib.Path(_os.environ.get("GS_FEED_CACHE_DIR", "/dev/shm/gs_feedcache"))
+_GS_FEED_TIMEOUT = float(_os.environ.get("GS_FEED_TIMEOUT", "10"))
+
+
+def _gs_to_int(v):
+    try:
+        return int(str(v).strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def _gs_norm_team(s: "str | None") -> str:
+    """Normalise a team name for cross-feed matching: lowercase, strip
+    accents, drop punctuation + common suffixes (FC / CF / 2 …)."""
+    import unicodedata as _ud
+    import re as _re
+    if not s:
+        return ""
+    t = _ud.normalize("NFKD", str(s)).encode("ascii", "ignore").decode("ascii").lower()
+    t = _re.sub(r"[^a-z0-9 ]+", " ", t)
+    t = _re.sub(r"\b(fc|cf|sc|afc|ac|ss|us|cd|club|de|the)\b", " ", t)
+    return _re.sub(r"\s+", " ", t).strip()
+
+
+def _gs_feed_get(path: str, ttl: float = 300.0) -> "bytes | None":
+    """GET getfeed/{key}/{path} with a /dev/shm TTL cache.  Serves a stale
+    cached copy on upstream failure.  Returns None when nothing is available."""
+    safe = "".join(c if (c.isalnum() or c in "._-") else "_" for c in path)
+    cache = _GS_FEED_CACHE / safe
+    try:
+        st = cache.stat()
+        if (time.time() - st.st_mtime) < ttl:
+            return cache.read_bytes()
+    except OSError:
+        pass
+    url = f"{_GS_FEED_BASE}/{_GS_FEED_KEY}/{path}"
+    try:
+        req = _logo_urlreq.Request(url, headers={"User-Agent": "pmppm-matchinfo/1.0"})
+        with _logo_urlreq.urlopen(req, timeout=_GS_FEED_TIMEOUT) as r:
+            raw = r.read()
+    except Exception:  # noqa: BLE001 — network/parse errors fall back to cache
+        try:
+            return cache.read_bytes()
+        except OSError:
+            return None
+    if not raw:
+        try:
+            return cache.read_bytes()
+        except OSError:
+            return None
+    try:
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        cache.write_bytes(raw)
+    except OSError:
+        pass
+    return raw
+
+
+def _gs_match_ctx(gid: int) -> "dict | None":
+    """foot_match row + derived Goalserve league id for a gid."""
+    try:
+        r = mysqldb.fetch_one(
+            "SELECT gid, team_h, team_c, league, lid, `datetime` "
+            "FROM foot_match WHERE gid = %s LIMIT 1",
+            (int(gid),),
+        )
+    except Exception:  # noqa: BLE001
+        return None
+    if not r:
+        return None
+    lid = int(r.get("lid") or 0)
+    gsl = lid - _GS_LID_BASE
+    # Hash-bucketed (non-numeric) GS slugs live at base+500000+ → invalid here.
+    r["_gs_league_id"] = gsl if (0 < gsl < 500000) else None
+    return r
+
+
+def _gs_find_match(root, team_h: str, team_c: str):
+    """Locate the <match> for our fixture inside a soccerfixtures feed.
+    Returns (match_el, flipped) where flipped=True when the feed's
+    localteam is actually our away side."""
+    nh, nc = _gs_norm_team(team_h), _gs_norm_team(team_c)
+    for mt in root.iter("match"):
+        lt = mt.find("localteam")
+        vt = mt.find("visitorteam")
+        if lt is None or vt is None:
+            continue
+        ln, vn = _gs_norm_team(lt.get("name")), _gs_norm_team(vt.get("name"))
+        if {ln, vn} == {nh, nc} and ln != vn:
+            return mt, (ln != nh)
+    return None, False
+
+
+def _gs_fixture_dates(ts: int, span: int = 1) -> str:
+    """date_start/date_end query (±span days around the kickoff)."""
+    base = int(ts or time.time())
+    d0 = time.strftime("%d.%m.%Y", time.gmtime(base - span * 86400))
+    d1 = time.strftime("%d.%m.%Y", time.gmtime(base + span * 86400))
+    return f"date_start={d0}&date_end={d1}"
+
+
+@router.get("/events/{event_id}/standings")
+def event_standings(event_id: int) -> dict:
+    import xml.etree.ElementTree as _ET
+    ctx = _gs_match_ctx(event_id)
+    if not ctx:
+        return {"ok": True, "mapped": False}
+    league_name = ctx.get("league")
+    gsl = ctx.get("_gs_league_id")
+    if not gsl:
+        return {"ok": True, "mapped": False, "league_name": league_name}
+    raw = _gs_feed_get(f"standings/{gsl}.xml", ttl=900)
+    if not raw:
+        return {"ok": True, "mapped": False, "league_name": league_name}
+    try:
+        root = _ET.fromstring(raw)
+    except _ET.ParseError:
+        return {"ok": True, "mapped": False, "league_name": league_name}
+    rows = []
+    for tm in root.iter("team"):
+        a = tm.attrib
+        ov = tm.find("overall")
+        tot = tm.find("total")
+        o = ov.attrib if ov is not None else {}
+        t = tot.attrib if tot is not None else {}
+        pts = t.get("p") if t.get("p") not in (None, "") else a.get("points")
+        rows.append({
+            "rank": _gs_to_int(a.get("position")),
+            "team_id": _gs_to_int(a.get("id")),
+            "team_name": a.get("name") or "",
+            "played": _gs_to_int(o.get("gp")),
+            "win": _gs_to_int(o.get("w")),
+            "draw": _gs_to_int(o.get("d")),
+            "lose": _gs_to_int(o.get("l")),
+            "goals_for": _gs_to_int(o.get("gs")),
+            "goals_against": _gs_to_int(o.get("ga")),
+            "points": _gs_to_int(pts),
+            "form": (a.get("recent_form") or "").replace(" ", ""),
+        })
+    if not rows:
+        return {"ok": True, "mapped": False, "league_name": league_name}
+    nh, nc = _gs_norm_team(ctx.get("team_h")), _gs_norm_team(ctx.get("team_c"))
+    home_id = away_id = None
+    for r in rows:
+        n = _gs_norm_team(r["team_name"])
+        if n == nh:
+            home_id = r["team_id"]
+        elif n == nc:
+            away_id = r["team_id"]
+    # League name from the feed root when foot_match has none.
+    if not league_name:
+        tour = root.find(".//tournament")
+        if tour is not None:
+            league_name = tour.get("league") or tour.get("name")
+    return {
+        "ok": True, "mapped": True, "league_name": league_name,
+        "home_team_id": home_id, "away_team_id": away_id, "standings": rows,
+    }
+
+
+# Goalserve numeric league id for the FIFA World Cup feed (standings carry one
+# <tournament> per group; soccerleague/{id} carries per-player goals/assists).
+# Override via env if Goalserve re-keys the competition.
+_GS_WC_LEAGUE_ID = int(_os.environ.get("GS_WC_LEAGUE_ID") or 1056)
+
+
+@router.get("/worldcup")
+def world_cup_overview() -> dict:
+    """World Cup group standings + top scorers, projected for the standalone
+    /h5/worldcup.html page.  Reads two Goalserve getfeed endpoints (cached in
+    /dev/shm) and always degrades to empty lists (never 500)."""
+    import xml.etree.ElementTree as _ET
+    import re as _re
+    league_id = _GS_WC_LEAGUE_ID
+    out = {
+        "ok": True, "league_id": league_id, "league_name": "FIFA World Cup",
+        "updated": "", "groups": [], "scorers": [],
+    }
+
+    # ---- Group standings (standings/{id}.xml; one <tournament> per group) ----
+    raw = _gs_feed_get(f"standings/{league_id}.xml", ttl=600)
+    if raw:
+        try:
+            root = _ET.fromstring(raw)
+        except _ET.ParseError:
+            root = None
+        if root is not None:
+            out["updated"] = root.get("timestamp") or ""
+            for tour in root.iter("tournament"):
+                gname = tour.get("group") or tour.get("name") or ""
+                # Only group-stage tables (skip knockout brackets etc.).
+                if "group" not in gname.lower():
+                    continue
+                teams = []
+                for tm in tour.findall("team"):
+                    a = tm.attrib
+                    ov = tm.find("overall")
+                    tot = tm.find("total")
+                    o = ov.attrib if ov is not None else {}
+                    t = tot.attrib if tot is not None else {}
+                    pts = t.get("p") if t.get("p") not in (None, "") else a.get("points")
+                    teams.append({
+                        "rank": _gs_to_int(a.get("position")),
+                        "team_id": _gs_to_int(a.get("id")),
+                        "team_name": a.get("name") or "",
+                        "played": _gs_to_int(o.get("gp")),
+                        "win": _gs_to_int(o.get("w")),
+                        "draw": _gs_to_int(o.get("d")),
+                        "lose": _gs_to_int(o.get("l")),
+                        "goals_for": _gs_to_int(o.get("gs")),
+                        "goals_against": _gs_to_int(o.get("ga")),
+                        "goals_diff": _gs_to_int(t.get("gd")),
+                        "points": _gs_to_int(pts),
+                        "form": (a.get("recent_form") or "").replace(" ", ""),
+                    })
+                if teams:
+                    # Normalise group label to just "Group X" when possible.
+                    label = gname
+                    _m = _re.search(r"group\s*([0-9A-Za-z]+)", gname, _re.IGNORECASE)
+                    if _m:
+                        label = f"Group {_m.group(1).upper()}"
+                    out["groups"].append({
+                        "group": label,
+                        "group_id": _gs_to_int(tour.get("groupId")),
+                        "teams": teams,
+                    })
+            # Stable order by group label.
+            out["groups"].sort(key=lambda g: g["group"])
+
+    # ---- Top scorers: aggregated from REAL WC-finals goal scorers -----------
+    # soccerfixtures goals carry player + playerid + assist; we tally goals per
+    # scorer over the tournament window.  Own goals are excluded from the
+    # scorer tally.  Empty until matches are actually played.
+    d0 = time.strftime("%d.%m.%Y", time.gmtime(int(time.time()) - 45 * 86400))
+    d1 = time.strftime("%d.%m.%Y", time.gmtime(int(time.time()) + 45 * 86400))
+    raw2 = _gs_feed_get(
+        f"soccerfixtures/league/{league_id}?date_start={d0}&date_end={d1}", ttl=300
+    )
+    if raw2:
+        try:
+            root2 = _ET.fromstring(raw2)
+        except _ET.ParseError:
+            root2 = None
+        if root2 is not None:
+            agg: dict = {}
+            def _rec(key, pid, name, tname, tid):
+                r = agg.get(key)
+                if r is None:
+                    r = {"player_id": pid, "name": name, "team_name": tname,
+                         "team_id": tid, "goals": 0, "assists": 0}
+                    agg[key] = r
+                return r
+            for mt in root2.iter("match"):
+                lt = mt.find("localteam"); vt = mt.find("visitorteam")
+                lt_name = (lt.get("name") if lt is not None else "") or ""
+                vt_name = (vt.get("name") if vt is not None else "") or ""
+                lt_id = _gs_to_int(lt.get("id")) if lt is not None else None
+                vt_id = _gs_to_int(vt.get("id")) if vt is not None else None
+                goals_el = mt.find("goals")
+                if goals_el is None:
+                    continue
+                for g in goals_el.findall("goal"):
+                    pname = (g.get("player") or "").strip()
+                    if not pname:
+                        continue
+                    low = pname.lower()
+                    if "o.g" in low or "own goal" in low:
+                        continue
+                    if (g.get("team") or "localteam") == "visitorteam":
+                        tname, tid = vt_name, vt_id
+                    else:
+                        tname, tid = lt_name, lt_id
+                    pid = _gs_to_int(g.get("playerid"))
+                    _rec(pid or (pname + "|" + tname), pid, pname, tname, tid)["goals"] += 1
+                    aname = (g.get("assist") or "").strip()
+                    if aname:
+                        aid = _gs_to_int(g.get("assistid"))
+                        _rec(aid or (aname + "|" + tname), aid, aname, tname, tid)["assists"] += 1
+            players = [r for r in agg.values() if r["goals"] > 0]
+            players.sort(key=lambda x: (-(x["goals"]), -(x["assists"]), x["name"]))
+            out["scorers"] = players[:50]
+
+    # ---- Chinese display names for every team (standings + scorers) ---------
+    names = set()
+    for grp in out["groups"]:
+        for t in grp["teams"]:
+            if t.get("team_name"):
+                names.add(t["team_name"])
+    for s in out["scorers"]:
+        if s.get("team_name"):
+            names.add(s["team_name"])
+    try:
+        cn = mysqldb.name_cn_map(list(names)) if names else {}
+    except Exception:  # noqa: BLE001
+        cn = {}
+    for grp in out["groups"]:
+        for t in grp["teams"]:
+            t["team_cn"] = cn.get(t.get("team_name") or "") or ""
+    for s in out["scorers"]:
+        s["team_cn"] = cn.get(s.get("team_name") or "") or ""
+
+    return out
+
+
+def _gs_players(side_el) -> list:
+    if side_el is None:
+        return []
+    return [
+        {"number": _gs_to_int(p.get("number")), "name": p.get("name") or "", "pos": ""}
+        for p in side_el.findall("player") if (p.get("name") or "").strip()
+    ]
+
+
+def _gs_subs(subs_root, tag: str) -> list:
+    """Bench players who came on, from <substitutions><localteam|visitorteam>."""
+    if subs_root is None:
+        return []
+    side = subs_root.find(tag)
+    if side is None:
+        return []
+    out = []
+    for s in side.findall("substitution"):
+        nm = s.get("player_in_name") or ""
+        if nm.strip():
+            out.append({"number": _gs_to_int(s.get("player_in_number")), "name": nm, "pos": ""})
+    return out
+
+
+@router.get("/events/{event_id}/lineups")
+def event_lineups(event_id: int) -> dict:
+    import xml.etree.ElementTree as _ET
+    ctx = _gs_match_ctx(event_id)
+    if not ctx:
+        return {"ok": True, "mapped": False, "teams": []}
+    gsl = ctx.get("_gs_league_id")
+    if not gsl:
+        return {"ok": True, "mapped": False, "teams": []}
+    q = _gs_fixture_dates(int(ctx.get("datetime") or 0), span=1)
+    raw = _gs_feed_get(f"soccerfixtures/league/{gsl}?{q}", ttl=300)
+    if not raw:
+        return {"ok": True, "mapped": False, "teams": []}
+    try:
+        root = _ET.fromstring(raw)
+    except _ET.ParseError:
+        return {"ok": True, "mapped": False, "teams": []}
+    mt, flipped = _gs_find_match(root, ctx.get("team_h"), ctx.get("team_c"))
+    if mt is None:
+        return {"ok": True, "mapped": False, "teams": []}
+    lu = mt.find("lineups")
+    subs = mt.find("substitutions")
+    if lu is None or (lu.find("localteam") is None and lu.find("visitorteam") is None):
+        return {"ok": True, "mapped": False, "teams": []}
+    lu_l, lu_v = lu.find("localteam"), lu.find("visitorteam")
+    sc_l, sc_v = mt.find("localteam"), mt.find("visitorteam")
+    home_side = {
+        "team": {"name": (sc_l.get("name") if sc_l is not None else ctx.get("team_h"))},
+        "formation": (lu_l.get("formation") if lu_l is not None else ""),
+        "startXI": _gs_players(lu_l),
+        "substitutes": _gs_subs(subs, "localteam"),
+    }
+    away_side = {
+        "team": {"name": (sc_v.get("name") if sc_v is not None else ctx.get("team_c"))},
+        "formation": (lu_v.get("formation") if lu_v is not None else ""),
+        "startXI": _gs_players(lu_v),
+        "substitutes": _gs_subs(subs, "visitorteam"),
+    }
+    # Upcoming matches carry an empty <lineups> block (XI posts ~1h pre-KO);
+    # treat "no players on either side" as unmapped so the pane shows its
+    # "暂无阵容数据" placeholder instead of an empty grid.
+    if not (home_side["startXI"] or away_side["startXI"]):
+        return {"ok": True, "mapped": False, "teams": []}
+    teams = [away_side, home_side] if flipped else [home_side, away_side]
+    return {"ok": True, "mapped": True, "teams": teams}
+
+
+def _gs_fixture_row(mt) -> dict:
+    lt, vt = mt.find("localteam"), mt.find("visitorteam")
+    d = mt.get("date") or ""
+    iso = ""
+    if d:
+        parts = d.split(".")
+        if len(parts) == 3:
+            iso = f"{parts[2]}-{parts[1]}-{parts[0]}"
+    return {
+        "home": (lt.get("name") if lt is not None else ""),
+        "away": (vt.get("name") if vt is not None else ""),
+        "score_home": (_gs_to_int(lt.get("score")) if lt is not None else None),
+        "score_away": (_gs_to_int(vt.get("score")) if vt is not None else None),
+        "date_iso": iso,
+        "date_sort": d.split(".")[::-1] if d else [],
+        "league": mt.get("_league") or "",
+    }
+
+
+@router.get("/events/{event_id}/h2h")
+def event_h2h(event_id: int) -> dict:
+    import xml.etree.ElementTree as _ET
+    ctx = _gs_match_ctx(event_id)
+    if not ctx:
+        return {"ok": True, "mapped": False}
+    gsl = ctx.get("_gs_league_id")
+    if not gsl:
+        return {"ok": True, "mapped": False}
+    base = int(ctx.get("datetime") or time.time())
+    d0 = time.strftime("%d.%m.%Y", time.gmtime(base - 300 * 86400))
+    d1 = time.strftime("%d.%m.%Y", time.gmtime(base + 2 * 86400))
+    raw = _gs_feed_get(f"soccerfixtures/league/{gsl}?date_start={d0}&date_end={d1}", ttl=3600)
+    if not raw:
+        return {"ok": True, "mapped": False}
+    try:
+        root = _ET.fromstring(raw)
+    except _ET.ParseError:
+        return {"ok": True, "mapped": False}
+    nh, nc = _gs_norm_team(ctx.get("team_h")), _gs_norm_team(ctx.get("team_c"))
+    finished, h2h = [], []
+    home_form, away_form = [], []
+    for mt in root.iter("match"):
+        lt, vt = mt.find("localteam"), mt.find("visitorteam")
+        if lt is None or vt is None:
+            continue
+        sh = _gs_to_int(lt.get("score"))
+        if sh is None:  # not played yet
+            continue
+        ln, vn = _gs_norm_team(lt.get("name")), _gs_norm_team(vt.get("name"))
+        row = _gs_fixture_row(mt)
+        if {ln, vn} == {nh, nc}:
+            h2h.append(row)
+        if nh in (ln, vn):
+            home_form.append(row)
+        if nc in (ln, vn):
+            away_form.append(row)
+    if not (h2h or home_form or away_form):
+        return {"ok": True, "mapped": False}
+    def _recent(arr, n):
+        arr.sort(key=lambda r: r.get("date_sort") or [], reverse=True)
+        for r in arr:
+            r.pop("date_sort", None)
+        return arr[:n]
+    return {
+        "ok": True, "mapped": True,
+        "home": {"name": ctx.get("team_h")},
+        "away": {"name": ctx.get("team_c")},
+        "h2h": _recent(h2h, 8),
+        "home_form": _recent(home_form, 6),
+        "away_form": _recent(away_form, 6),
+    }
+
+
+@router.get("/events/{event_id}/timeline")
+def event_timeline(event_id: int) -> dict:
+    """Post-match (or pre-snap) event timeline from soccerfixtures — the
+    finished-match counterpart to /inplay-events.  Same wire shape so the
+    H5 events pane renders it unchanged."""
+    import xml.etree.ElementTree as _ET
+    import re as _re
+    ctx = _gs_match_ctx(event_id)
+    if not ctx:
+        return {"ok": True, "source": "goalserve", "mapped": False, "events": []}
+    gsl = ctx.get("_gs_league_id")
+    if not gsl:
+        return {"ok": True, "source": "goalserve", "mapped": False, "events": []}
+    q = _gs_fixture_dates(int(ctx.get("datetime") or 0), span=1)
+    raw = _gs_feed_get(f"soccerfixtures/league/{gsl}?{q}", ttl=300)
+    if not raw:
+        return {"ok": True, "source": "goalserve", "mapped": False, "events": []}
+    try:
+        root = _ET.fromstring(raw)
+    except _ET.ParseError:
+        return {"ok": True, "source": "goalserve", "mapped": False, "events": []}
+    mt, flipped = _gs_find_match(root, ctx.get("team_h"), ctx.get("team_c"))
+    if mt is None:
+        return {"ok": True, "source": "goalserve", "mapped": False, "events": []}
+
+    def _side(team_attr: str) -> str:
+        is_local = (team_attr == "localteam")
+        if flipped:
+            is_local = not is_local
+        return "home" if is_local else "away"
+
+    evs = []
+    goals = mt.find("goals")
+    if goals is not None:
+        for g in goals.findall("goal"):
+            evs.append({
+                "type": "goal", "minute": _gs_to_int(g.get("minute")), "extra": None,
+                "side": _side(g.get("team") or ""), "team": g.get("player") or "",
+                "label": "进球",
+            })
+    # Cards come from each lineup player's booking="YC 76" / "RC 45".
+    lu = mt.find("lineups")
+    if lu is not None:
+        for tag in ("localteam", "visitorteam"):
+            side_el = lu.find(tag)
+            if side_el is None:
+                continue
+            for p in side_el.findall("player"):
+                bk = (p.get("booking") or "").strip()
+                if not bk:
+                    continue
+                mm = _re.match(r"(YC|RC|YR)\s*(\d+)?", bk, _re.I)
+                if not mm:
+                    continue
+                kind = mm.group(1).upper()
+                typ = "red_card" if kind in ("RC", "YR") else "yellow_card"
+                evs.append({
+                    "type": typ, "minute": _gs_to_int(mm.group(2)), "extra": None,
+                    "side": _side(tag), "team": p.get("name") or "",
+                    "label": "红牌" if typ == "red_card" else "黄牌",
+                })
+    subs = mt.find("substitutions")
+    if subs is not None:
+        for tag in ("localteam", "visitorteam"):
+            side_el = subs.find(tag)
+            if side_el is None:
+                continue
+            for s in side_el.findall("substitution"):
+                nm = s.get("player_in_name") or ""
+                if not nm.strip():
+                    continue
+                evs.append({
+                    "type": "substitution", "minute": _gs_to_int(s.get("minute")),
+                    "extra": None, "side": _side(tag), "team": nm, "label": "换人",
+                })
+    evs.sort(key=lambda e: (e["minute"] if e["minute"] is not None else 999))
+    return {"ok": True, "source": "goalserve", "mapped": True,
+            "home": ctx.get("team_h"), "away": ctx.get("team_c"), "events": evs}
 
 
 # ---------------------------------------------------------------------------
@@ -2480,7 +3567,10 @@ def logo_proxy(category: str, gid: int):
         cache_file.unlink(missing_ok=True)
     # Cold miss: fetch upstream.
     try:
-        data = _logo_fetch(category, gid)
+        if category == "playerphoto":
+            data = _logo_fetch_player_photo(gid)
+        else:
+            data = _logo_fetch(category, gid)
     except Exception:
         # Transient upstream error (429/5xx/timeout) — do NOT negative-cache.
         return _logo_Response(

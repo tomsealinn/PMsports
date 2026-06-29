@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#3B82F6">
+<title>2026 世界杯 · 小组积分 / 射手榜</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzNCODJGNiIvPjxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjkiIGZpbGw9IiNmZmYiLz48cG9seWdvbiBwb2ludHM9IjE2LDExIDIwLDE0IDE4LDE5IDE0LDE5IDEyLDE0IiBmaWxsPSIjMUQ0RUQ4Ii8+PC9zdmc+">
+<style>
+:root{
+  --blue:#3B82F6;--blue-mid:#60A5FA;--blue-deep:#2563EB;--blue-bg:#EFF6FF;
+  --bg:#F4F7FB;--white:#fff;--text-dark:#0F172A;--text-mid:#475569;--text-light:#94A3B8;
+  --border:#E8EDF4;--green:#22C55E;--gold:#F59E0B;
+  --r-card:1.25rem;--r-btn:.85rem;--r-tag:2rem;
+  --shadow:0 8px 28px rgba(15,23,42,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text-dark);-webkit-font-smoothing:antialiased;line-height:1.5;padding-bottom:48px}
+a{text-decoration:none;color:inherit}
+.topbar{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:12px 16px}
+.topbar .back{display:inline-flex;align-items:center;gap:5px;font-weight:700;font-size:.9rem;color:var(--blue);padding:6px 12px;border-radius:var(--r-btn);background:var(--blue-bg)}
+.topbar .brand{font-weight:900;font-size:1.05rem;letter-spacing:-.01em}
+.wrap{max-width:1080px;margin:0 auto;padding:16px}
+.hero-wc{background:linear-gradient(135deg,var(--blue),var(--blue-deep));border-radius:var(--r-card);padding:1.1rem 1.4rem;color:#fff;position:relative;overflow:hidden;box-shadow:0 16px 40px rgba(59,130,246,.28);margin-bottom:16px}
+.hero-wc .deco{position:absolute;top:-50px;right:-40px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.08)}
+.hero-wc .tag{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:var(--r-tag);background:rgba(255,255,255,.2);font-size:.74rem;font-weight:700;letter-spacing:.04em}
+.hero-wc h1{font-size:1.5rem;font-weight:900;margin:.5rem 0 .2rem;letter-spacing:-.02em;position:relative;z-index:1}
+.hero-wc p{font-size:.84rem;color:rgba(255,255,255,.85)}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tabs button{flex:1;max-width:160px;padding:11px 18px;border:none;border-radius:var(--r-btn);background:var(--white);color:var(--text-mid);font-weight:800;font-size:.92rem;cursor:pointer;transition:all .2s;box-shadow:var(--shadow);font-family:inherit}
+.tabs button.active{background:var(--blue);color:#fff;box-shadow:0 6px 18px rgba(59,130,246,.32)}
+.groups-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.group-card{background:var(--white);border-radius:var(--r-card);box-shadow:var(--shadow);overflow:hidden}
+.group-card h3{font-size:.95rem;font-weight:900;padding:12px 16px;background:var(--blue-bg);color:var(--blue-deep);border-bottom:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--border)}
+th{font-size:.7rem;color:var(--text-light);font-weight:700;background:#fafcff}
+tr:last-child td{border-bottom:none}
+.tm{display:flex;align-items:center;gap:8px;text-align:left;padding-left:12px!important}
+.crest-wrap{position:relative;display:inline-flex;width:22px;height:22px;flex-shrink:0}
+.crest-wrap .ini{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:800;color:#fff;background:var(--blue-mid)}
+.crest-wrap img{position:absolute;inset:0;width:22px;height:22px;border-radius:50%;object-fit:cover;background:#fff}
+.avatar-wrap{position:relative;display:inline-flex;width:34px;height:34px;flex-shrink:0;margin-right:10px;vertical-align:middle}
+.avatar-wrap .ini{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--blue-mid),var(--blue-deep))}
+.avatar-wrap img{position:absolute;inset:0;width:34px;height:34px;border-radius:50%;object-fit:cover;background:#fff;border:1px solid var(--border)}
+.scorer-name{display:flex;align-items:center}
+.scorer-name .pn{font-weight:700;color:var(--text-dark)}
+.tm .nm{font-weight:600;color:var(--text-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td.rk{font-weight:800;color:var(--text-mid);width:26px}
+td.pts{font-weight:900;color:var(--blue-deep)}
+.col-left th:first-child,.col-left td:first-child{text-align:left}
+.form{display:inline-flex;gap:2px}
+.form i{width:6px;height:6px;border-radius:50%;display:inline-block}
+.form i.W{background:var(--green)}.form i.D{background:var(--text-light)}.form i.L{background:#EF4444}
+.scorer-card{background:var(--white);border-radius:var(--r-card);box-shadow:var(--shadow);overflow:hidden}
+.scorer-card table th:nth-child(2),.scorer-card table td:nth-child(2){text-align:left}
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-weight:800;font-size:.74rem;color:var(--text-mid);background:var(--border)}
+.rank-badge.g1{background:var(--gold);color:#fff}.rank-badge.g2{background:#CBD5E1;color:#fff}.rank-badge.g3{background:#D9A066;color:#fff}
+.goal-pill{font-weight:900;color:var(--blue-deep)}
+.loading,.empty{text-align:center;padding:48px 16px;color:var(--text-light);font-size:.9rem}
+.spinner{width:34px;height:34px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--blue);animation:spin .9s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pulse{width:6px;height:6px;border-radius:50%;background:#fff;display:inline-block;animation:pls 1.4s ease-in-out infinite}
+@keyframes pls{0%,100%{opacity:1}50%{opacity:.4}}
+.updated{font-size:.72rem;color:var(--text-light);margin:10px 2px 0}
+@media(max-width:640px){.groups-grid{grid-template-columns:1fr}.hero-wc h1{font-size:1.25rem}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a class="back" href="sports.html">← 返回</a>
+  <span class="brand">PM体育 · 世界杯</span>
+</div>
+<div class="wrap">
+  <div class="hero-wc">
+    <div class="deco"></div>
+    <span class="tag"><span class="pulse"></span>2026 FIFA WORLD CUP</span>
+    <h1>世界杯 · 小组积分 / 射手榜</h1>
+    <p id="wc-sub">数据来自 pmppm.com · 实时更新</p>
+  </div>
+
+  <div class="tabs">
+    <button id="tab-groups" class="active" type="button">小组积分</button>
+    <button id="tab-scorers" type="button">射手榜</button>
+  </div>
+
+  <div id="view-groups">
+    <div class="loading"><div class="spinner"></div>加载小组积分…</div>
+  </div>
+  <div id="view-scorers" style="display:none">
+    <div class="loading"><div class="spinner"></div>加载射手榜…</div>
+  </div>
+  <div class="updated" id="wc-updated"></div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var $ = function(s){ return document.querySelector(s); };
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+  /* English national-team name → 简体中文 (World Cup participants + common). */
+  var CN = {
+    "Argentina":"阿根廷","Australia":"澳大利亚","Austria":"奥地利","Belgium":"比利时","Brazil":"巴西",
+    "Cameroon":"喀麦隆","Canada":"加拿大","Chile":"智利","Colombia":"哥伦比亚","Costa Rica":"哥斯达黎加",
+    "Croatia":"克罗地亚","Czech Republic":"捷克","Denmark":"丹麦","Ecuador":"厄瓜多尔","Egypt":"埃及",
+    "England":"英格兰","France":"法国","Germany":"德国","Ghana":"加纳","Greece":"希腊",
+    "Iran":"伊朗","IR Iran":"伊朗","Italy":"意大利","Ivory Coast":"科特迪瓦","Cote D'Ivoire":"科特迪瓦",
+    "Japan":"日本","Mexico":"墨西哥","Morocco":"摩洛哥","Netherlands":"荷兰","New Zealand":"新西兰",
+    "Nigeria":"尼日利亚","Norway":"挪威","Panama":"巴拿马","Paraguay":"巴拉圭","Peru":"秘鲁",
+    "Poland":"波兰","Portugal":"葡萄牙","Qatar":"卡塔尔","Saudi Arabia":"沙特阿拉伯","Scotland":"苏格兰",
+    "Senegal":"塞内加尔","Serbia":"塞尔维亚","Slovakia":"斯洛伐克","Slovenia":"斯洛文尼亚","South Africa":"南非",
+    "South Korea":"韩国","Korea Republic":"韩国","Spain":"西班牙","Sweden":"瑞典","Switzerland":"瑞士",
+    "Tunisia":"突尼斯","Turkey":"土耳其","Uruguay":"乌拉圭","USA":"美国","United States":"美国",
+    "Wales":"威尔士","Algeria":"阿尔及利亚","Ukraine":"乌克兰","Hungary":"匈牙利","Romania":"罗马尼亚",
+    "Uzbekistan":"乌兹别克斯坦","Jordan":"约旦","Cape Verde":"佛得角","Curacao":"库拉索","Haiti":"海地",
+    "Honduras":"洪都拉斯","Bolivia":"玻利维亚","Venezuela":"委内瑞拉","DR Congo":"刚果民主共和国","Congo DR":"刚果民主共和国"
+  };
+  /* Curated CN names for well-known internationals (keyed by normalized
+     lastname; the goal feed sends "I. Lastname").  Uncovered players fall
+     back to the English original. */
+  var PCN = {
+    "mbappe":"姆巴佩","haaland":"哈兰德","kane":"凯恩","son":"孙兴慜","messi":"梅西",
+    "ronaldo":"C罗","vinicius":"维尼修斯","vini":"维尼修斯","bellingham":"贝林厄姆",
+    "lewandowski":"莱万多夫斯基","griezmann":"格列兹曼","saka":"萨卡","foden":"福登",
+    "rashford":"拉什福德","musiala":"穆西亚拉","wirtz":"维尔茨","havertz":"哈弗茨",
+    "yamal":"亚马尔","pedri":"佩德里","morata":"莫拉塔","depay":"德佩","gakpo":"加克波",
+    "alvarez":"阿尔瓦雷斯","vlahovic":"弗拉霍维奇","osimhen":"奥斯梅恩","salah":"萨拉赫",
+    "mahrez":"马赫雷斯","hakimi":"哈基米","modric":"莫德里奇","pulisic":"普利西奇",
+    "davies":"戴维斯","kvaratskhelia":"赫维察","olmo":"奥尔莫","rodri":"罗德里",
+    "gavi":"加维","lautaro":"劳塔罗","dimaria":"迪马利亚","dybala":"迪巴拉",
+    "enzo":"恩佐","neymar":"内马尔","raphinha":"拉菲尼亚","rodrygo":"罗德里戈",
+    "richarlison":"里沙利松","casemiro":"卡塞米罗","dembele":"登贝莱","giroud":"吉鲁",
+    "mbeumo":"姆伯莫","thuram":"图拉姆","barcola":"巴尔科拉","tchouameni":"琼阿梅尼",
+    "gnabry":"格纳布里","sane":"萨内","fullkrug":"菲尔克鲁格","gundogan":"京多安",
+    "kimmich":"基米希","schick":"希克","soucek":"索切克","vandijk":"范戴克",
+    "dijk":"范戴克","simons":"西蒙斯","frimpong":"弗林蓬","reijnders":"雷因德斯",
+    "malen":"马伦","weghorst":"韦霍斯特","mctominay":"麦克托米奈","robertson":"罗伯逊",
+    "kudus":"库杜斯","mitrovic":"米特罗维奇","perisic":"佩里西奇","kramaric":"克拉马里奇",
+    "ueda":"上田绮世","mitoma":"三笘薫","kubo":"久保建英","doan":"堂安律","minamino":"南野拓实",
+    "arnautovic":"阿瑙托维奇","oyarzabal":"奥亚萨瓦尔","merino":"梅里诺","odegaard":"厄德高",
+    "sorloth":"索尔洛特","hojlund":"霍伊伦","eriksen":"埃里克森","isak":"伊萨克",
+    "gyokeres":"约克雷斯","akanji":"阿坎吉","embolo":"恩博洛","shaqiri":"沙奇里",
+    "nunez":"努涅斯","valverde":"巴尔韦德","suarez":"苏亚雷斯","lozano":"洛萨诺",
+    "gimenez":"希门尼斯","hwang":"黄喜灿","pizarro":"皮萨罗","kang":"姜仁的"
+  };
+  function teamCn(n, cn){ return (cn && (''+cn).trim()) ? cn : (CN[n] || (n||'')); }
+  function initials(n){ n=(n||'').trim(); return n? n.slice(0,2).toUpperCase() : '?'; }
+  function pInitial(n){ n=(n||'').replace(/^[A-Za-z]\.\s*/,'').trim(); return (n.charAt(0)||'?').toUpperCase(); }
+  function normName(n){
+    n=(n||'').trim(); var i=n.lastIndexOf('. ');
+    var last = i>=0 ? n.slice(i+2) : n; last=(last.trim()||n).replace(/[\s\-']/g,'');
+    return last.normalize ? last.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase() : last.toLowerCase();
+  }
+  function playerCn(name){ return PCN[normName(name)] || (name||''); }
+  function crest(id,name){
+    var ini = '<span class="ini">'+esc(initials(name))+'</span>';
+    if(!id) return '<span class="crest-wrap">'+ini+'</span>';
+    return '<span class="crest-wrap">'+ini+'<img src="/api/external/logos/teams/'+id+'.png?v=2" alt="" onerror="this.style.display=\'none\'"></span>';
+  }
+  function avatar(id,name){
+    var ini = '<span class="ini">'+esc(pInitial(name))+'</span>';
+    if(!id) return '<span class="avatar-wrap">'+ini+'</span>';
+    return '<span class="avatar-wrap">'+ini+'<img src="/api/external/logos/playerphoto/'+id+'.png" alt="" onerror="this.style.display=\'none\'"></span>';
+  }
+
+  function renderGroups(groups){
+    var host = $('#view-groups');
+    if(!groups || !groups.length){ host.innerHTML = '<div class="empty">暂无小组积分数据，世界杯即将开赛。</div>'; return; }
+    var html = '<div class="groups-grid">';
+    groups.forEach(function(g){
+      html += '<div class="group-card"><h3>'+esc(g.group.replace(/^Group\s*/i,'小组 '))+'</h3>'+
+        '<table><thead><tr><th>#</th><th style="text-align:left;padding-left:12px">球队</th><th>赛</th><th>胜</th><th>平</th><th>负</th><th>进/失</th><th>净</th><th>分</th></tr></thead><tbody>';
+      (g.teams||[]).forEach(function(t,i){
+        html += '<tr>'+
+          '<td class="rk">'+(t.rank||i+1)+'</td>'+
+          '<td class="tm">'+crest(t.team_id,t.team_name)+'<span class="nm">'+esc(teamCn(t.team_name,t.team_cn))+'</span></td>'+
+          '<td>'+(t.played||0)+'</td><td>'+(t.win||0)+'</td><td>'+(t.draw||0)+'</td><td>'+(t.lose||0)+'</td>'+
+          '<td>'+(t.goals_for||0)+':'+(t.goals_against||0)+'</td>'+
+          '<td>'+((t.goals_diff>0?'+':'')+(t.goals_diff||0))+'</td>'+
+          '<td class="pts">'+(t.points||0)+'</td>'+
+        '</tr>';
+      });
+      html += '</tbody></table></div>';
+    });
+    html += '</div>';
+    host.innerHTML = html;
+  }
+
+  function renderScorers(scorers){
+    var host = $('#view-scorers');
+    if(!scorers || !scorers.length){ host.innerHTML = '<div class="empty">暂无射手榜数据，比赛进行后将自动更新。</div>'; return; }
+    var html = '<div class="scorer-card"><table><thead><tr><th style="width:42px">#</th><th>球员</th><th>球队</th><th>进球</th><th>助攻</th></tr></thead><tbody>';
+    scorers.forEach(function(p,i){
+      var g = i===0?'g1':i===1?'g2':i===2?'g3':'';
+      html += '<tr>'+
+        '<td><span class="rank-badge '+g+'">'+(i+1)+'</span></td>'+
+        '<td><span class="scorer-name">'+avatar(p.player_id,p.name)+'<span class="pn">'+esc(playerCn(p.name))+'</span></span></td>'+
+        '<td><span class="tm" style="justify-content:flex-start;padding-left:0!important">'+crest(p.team_id,p.team_name)+'<span class="nm">'+esc(teamCn(p.team_name,p.team_cn))+'</span></span></td>'+
+        '<td><span class="goal-pill">'+(p.goals||0)+'</span></td>'+
+        '<td>'+(p.assists||0)+'</td>'+
+      '</tr>';
+    });
+    html += '</tbody></table></div>';
+    host.innerHTML = html;
+  }
+
+  $('#tab-groups').addEventListener('click', function(){
+    this.classList.add('active'); $('#tab-scorers').classList.remove('active');
+    $('#view-groups').style.display=''; $('#view-scorers').style.display='none';
+  });
+  $('#tab-scorers').addEventListener('click', function(){
+    this.classList.add('active'); $('#tab-groups').classList.remove('active');
+    $('#view-scorers').style.display=''; $('#view-groups').style.display='none';
+  });
+
+  function fmtUpdated(s){
+    if(!s) return '';
+    return '更新时间：'+s+'（北京时间）';
+  }
+
+  fetch('/api/external/worldcup', {credentials:'same-origin', cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(d){
+      renderGroups(d.groups);
+      renderScorers(d.scorers);
+      if(d.league_name) $('#wc-sub').textContent = esc(d.league_name)+' · 数据来自 pmppm.com';
+      $('#wc-updated').textContent = fmtUpdated(d.updated);
+    })
+    .catch(function(err){
+      $('#view-groups').innerHTML = '<div class="empty">⚠️ 加载失败：'+esc(err.message)+'</div>';
+      $('#view-scorers').innerHTML = '<div class="empty">⚠️ 加载失败：'+esc(err.message)+'</div>';
+    });
+})();
+</script>
+</body>
+</html>

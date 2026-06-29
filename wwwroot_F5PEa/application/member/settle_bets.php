@@ -442,112 +442,13 @@ function applyScoresToFootMatch(PDO $pdoS, int $gid, array $fx, bool $flipped): 
 }
 
 // ---------- Bet settlement core ----------
-/**
- * Decide single-leg result by wtype/rtype/spread + scores.
- * Return: 'W' | 'L' | 'HW' | 'HL' | 'T' (T=void/refund) | null (unknown — skip)
- */
-function gradeBet(array $bet, array $fx, bool $flipped): ?string {
-    $h = $fx['goals']['home'] ?? null;
-    $c = $fx['goals']['away'] ?? null;
-    $hHt = $fx['score']['halftime']['home'] ?? null;
-    $cHt = $fx['score']['halftime']['away'] ?? null;
-    if ($flipped) { [$h, $c] = [$c, $h]; [$hHt, $cHt] = [$cHt, $hHt]; }
-    if ($h === null || $c === null) return null;
-
-    $wtype  = strtoupper((string)($bet['wtype']  ?? ''));
-    $rtype  = strtoupper((string)($bet['rtype']  ?? ''));
-    $spread = $bet['spread'] !== null && $bet['spread'] !== '' ? (float)$bet['spread'] : null;
-
-    // Resolve target half
-    $isHt = in_array($wtype, ['HT_ML','HT_SP','HT_OU','HT_BTS'], true);
-    if ($isHt) {
-        if ($hHt === null || $cHt === null) return null;
-        $H = (int)$hHt; $C = (int)$cHt;
-    } else {
-        $H = (int)$h; $C = (int)$c;
-    }
-    $total = $H + $C;
-    $homeWin = $H > $C; $awayWin = $C > $H; $draw = $H === $C;
-
-    switch ($wtype) {
-        // Match winner (3-way, includes Draw)
-        case '1X2':
-        case 'ML':
-        case 'HT_ML':
-            if ($rtype === 'H') return $homeWin ? 'W' : 'L';
-            if ($rtype === 'C') return $awayWin ? 'W' : 'L';
-            if ($rtype === 'D') return $draw    ? 'W' : 'L';
-            return null;
-
-        // Draw No Bet (2-way; draw refunds)
-        case 'DNB':
-            if ($draw) return 'T';
-            if ($rtype === 'H') return $homeWin ? 'W' : 'L';
-            if ($rtype === 'C') return $awayWin ? 'W' : 'L';
-            return null;
-
-        // Asian Handicap / Spread (supports half/quarter lines)
-        // spread is from chosen team's perspective (e.g. -1.5 means team gives 1.5)
-        case 'SP':
-        case 'HT_SP':
-            if ($spread === null) return null;
-            $myGoals  = $rtype === 'H' ? $H : ($rtype === 'C' ? $C : null);
-            $oppGoals = $rtype === 'H' ? $C : ($rtype === 'C' ? $H : null);
-            if ($myGoals === null) return null;
-            $diff = ($myGoals + $spread) - $oppGoals;
-            // quarter line (e.g. -0.25 / +0.75) — frontend posts a single value, treat as full
-            if ($diff > 0.25)        return 'W';
-            elseif ($diff > 0)       return 'HW';
-            elseif (abs($diff) < 1e-9) return 'T';
-            elseif ($diff < -0.25)   return 'L';
-            else                     return 'HL';
-
-        // Over / Under totals
-        case 'OU':
-        case 'HT_OU':
-            if ($spread === null) return null;
-            $diff = $total - $spread;
-            $isOver = $rtype === 'OVER';
-            if (abs($diff) < 1e-9) return 'T';
-            if ($diff > 0.25)        return $isOver ? 'W' : 'L';
-            elseif ($diff > 0)       return $isOver ? 'HW' : 'HL';
-            elseif ($diff < -0.25)   return $isOver ? 'L' : 'W';
-            else                     return $isOver ? 'HL' : 'HW';
-
-        // Double Chance: HD=1X (home or draw), CD=X2 (draw or away), HC=12 (home or away)
-        case 'DC':
-            if ($rtype === 'HD') return ($homeWin || $draw)    ? 'W' : 'L';
-            if ($rtype === 'CD') return ($awayWin || $draw)    ? 'W' : 'L';
-            if ($rtype === 'HC') return ($homeWin || $awayWin) ? 'W' : 'L';
-            return null;
-
-        // Both Teams To Score
-        case 'BTS':
-        case 'HT_BTS':
-            $bts = ($H > 0 && $C > 0);
-            if ($rtype === 'Y') return $bts ? 'W' : 'L';
-            if ($rtype === 'N') return $bts ? 'L' : 'W';
-            return null;
-
-        // Correct Score — rtype like "1:0" or "1-0"
-        case 'CS':
-            $rtype = str_replace('-', ':', $rtype);
-            $parts = explode(':', $rtype);
-            if (count($parts) !== 2) return null;
-            $rH = (int)$parts[0]; $rC = (int)$parts[1];
-            return ($rH === $H && $rC === $C) ? 'W' : 'L';
-
-        // Total Goals Odd/Even
-        case 'OE':
-            $isOdd = ($total % 2 === 1);
-            if ($rtype === 'ODD')  return $isOdd ? 'W' : 'L';
-            if ($rtype === 'EVEN') return $isOdd ? 'L' : 'W';
-            return null;
-
-        default:
-            return null; // unknown — leave for manual review
-    }
-}
+// gradeBet() now lives in settle_graders.php (pure, no DB/I/O) so it can be
+// unit-tested in isolation (test_graders.php) and shared by every settle
+// path.  See that file for the full wtype/rtype/spread reference, including
+// the A1 markets (2nd-half, European/3-way handicap, team goals, exact goals,
+// clean-sheet, win-to-nil, highest-scoring-half, win-both/either-half,
+// HT/FT, cards, corner EH/team).
+require_once __DIR__ . '/settle_graders.php';
 
 /**
  * Apply grade to bet row + adjust member credit.
@@ -641,8 +542,13 @@ function applyGrade(PDO $pdoC, array $bet, string $grade, string $inballStr): bo
             $log->execute([':nid' => $bet['nid']]);
             $mem = $log->fetch();
             if ($mem) {
-                $betCurrency = $bet['currency'] ?? 'USDT';
-                $paybackNative = convertCurrency($payback, $betCurrency, $mem['currency'] ?? 'RMB');
+                // Payback is already in the member's native currency (RMB):
+                // bet_golds/win_gold are stored natively, so credit back 1:1.
+                // The legacy convertCurrency($payback,'USDT',...) inflated the
+                // credit-back by the FX rate (~7x) because H5 bets carry
+                // currency='USDT' (UI shows ¥ but stores USDT label), mirroring
+                // the place-bet over-deduction bug that was already fixed.
+                $paybackNative = round($payback, 2);
                 $stmt = $pdoC->prepare("UPDATE member SET credit = credit + :p, balance_credit = balance_credit + :p
                                         WHERE nid = :nid AND pay_type = 1");
                 $stmt->execute([':p' => $paybackNative, ':nid' => $bet['nid']]);
@@ -694,11 +600,26 @@ logmsg("Unsettled gids: " . count($gids));
 
 $settled = 0; $matched = 0; $skipped = 0;
 
+// A2 enrich columns are added live by goalserve_a2_enrich.ensure_columns().
+// Detect them once so the PRIORITY-0 SELECT degrades gracefully (and never
+// errors) on a foot_match that predates the migration.
+$HAS_A2_COLS = false;
+try {
+    $colChk = $pdoS->query("SHOW COLUMNS FROM foot_match LIKE 'gs_timeline'");
+    $HAS_A2_COLS = $colChk && $colChk->fetch() !== false;
+} catch (\Throwable $e) { $HAS_A2_COLS = false; }
+logmsg('A2 enrich columns present: ' . ($HAS_A2_COLS ? 'yes' : 'no'));
+
 foreach ($gids as $gid) {
     $gid = (int)$gid;
     // foot_match
+    $gsCols = $HAS_A2_COLS
+        ? ', gs_timeline, gs_ft_h, gs_ft_c, gs_et_h, gs_et_c, gs_pen_h, gs_pen_c, gs_decider'
+        : '';
     $m = $pdoS->prepare("SELECT gid, team_h, team_c, league, `datetime`, status, score_h, score_c,
-                                inball_h, inball_c, inball_h_hr, inball_c_hr, is_inball
+                                inball_h, inball_c, inball_h_hr, inball_c_hr, is_inball,
+                                apisports_corners_h, apisports_corners_c,
+                                apisports_yc_h, apisports_yc_c, apisports_rc_h, apisports_rc_c{$gsCols}
                           FROM foot_match WHERE gid = :gid LIMIT 1");
     $m->execute([':gid' => $gid]);
     $match = $m->fetch();
@@ -719,8 +640,40 @@ foreach ($gids as $gid) {
         $fxS = [
             'goals' => ['home' => (int)$match['inball_h'], 'away' => (int)$match['inball_c']],
             'score' => ['halftime' => ['home' => $hHt, 'away' => $cHt]],
+            // Final full-match corner counts for CORNER_* grading.
+            'corners' => [
+                'home' => ($match['apisports_corners_h'] !== null && $match['apisports_corners_h'] !== '') ? (int)$match['apisports_corners_h'] : null,
+                'away' => ($match['apisports_corners_c'] !== null && $match['apisports_corners_c'] !== '') ? (int)$match['apisports_corners_c'] : null,
+            ],
+            // Final card counts (= yellow + red) for CARDS_* grading.  NULL
+            // when the live snap never carried a card stat (→ manual grading).
+            'cards' => [
+                'home' => (($match['apisports_yc_h'] !== null && $match['apisports_yc_h'] !== '') || ($match['apisports_rc_h'] !== null && $match['apisports_rc_h'] !== ''))
+                          ? ((int)($match['apisports_yc_h'] ?? 0) + (int)($match['apisports_rc_h'] ?? 0)) : null,
+                'away' => (($match['apisports_yc_c'] !== null && $match['apisports_yc_c'] !== '') || ($match['apisports_rc_c'] !== null && $match['apisports_rc_c'] !== ''))
+                          ? ((int)($match['apisports_yc_c'] ?? 0) + (int)($match['apisports_rc_c'] ?? 0)) : null,
+            ],
             'fixture' => ['status' => ['short' => 'FT']],
         ];
+        // A2 enrich (soccerfixtures timeline + ET/PEN) — only when the row
+        // has been enriched.  The gs_* split columns are authoritative for
+        // the score pairs; the JSON carries the goal/card/sub timeline.
+        if ($HAS_A2_COLS && !empty($match['gs_timeline'])) {
+            $gsArr = json_decode((string)$match['gs_timeline'], true);
+            if (is_array($gsArr)) {
+                $toPair = function ($a, $b) {
+                    return ($a !== null && $a !== '' && $b !== null && $b !== '') ? [(int)$a, (int)$b] : null;
+                };
+                $pFt  = $toPair($match['gs_ft_h']  ?? null, $match['gs_ft_c']  ?? null);
+                $pEt  = $toPair($match['gs_et_h']  ?? null, $match['gs_et_c']  ?? null);
+                $pPen = $toPair($match['gs_pen_h'] ?? null, $match['gs_pen_c'] ?? null);
+                if ($pFt  !== null) $gsArr['ft']  = $pFt;
+                if ($pEt  !== null) $gsArr['et']  = $pEt;
+                if ($pPen !== null) $gsArr['pen'] = $pPen;
+                if (!empty($match['gs_decider'])) $gsArr['dec'] = (string)$match['gs_decider'];
+                $fxS['gs'] = $gsArr;
+            }
+        }
         $inballStr = (int)$match['inball_h'] . ':' . (int)$match['inball_c'];
         $bs = $pdoC->prepare("SELECT * FROM bet WHERE gid = :g AND isResult = 0 AND gid NOT LIKE '%,%' LIMIT 200");
         $bs->execute([':g' => (string)$gid]);

@@ -2201,6 +2201,9 @@ class Account extends Base
         }
 
         $insert["adddate"] = time();
+        if($layer != Constant::MEM){
+            $insert["pwddate"] = time();
+        }
 
         if((isset($this->param["no_date"]) && $this->param["no_date"] === "true") || !isset($this->param["end_date"])){
             $insert["enddate"] = 0;

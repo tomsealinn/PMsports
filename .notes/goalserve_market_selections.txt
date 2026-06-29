@@ -1,0 +1,413 @@
+### 1215150
+    ['over', 'under']
+### 1215250
+    ['over', 'under']
+### 1215550
+    ['over', 'under']
+### 1st Goal in Interval
+    ['yes', 'no']
+### 1st Half Exact Goals Number
+    ['0', '1', '2', '3', '4', 'more 5']
+### 1st Half Winner
+    ['Home', 'Draw', 'Away']
+### 1x2 (1st Half)
+    ['home', 'draw', 'away']
+### 1x2 - 10 minutes
+    ['home', 'draw', 'away']
+### 1x2 - 20 minutes
+    ['home', 'draw', 'away']
+### 1x2 - 30 minutes
+    ['home', 'draw', 'away']
+### 1x2 - 40 minutes
+    ['home', 'draw', 'away']
+### 1x2 - 50 minutes
+    ['home', 'draw', 'away']
+### 1x2 - 60 minutes
+    ['home', 'draw', 'away']
+### 1x2 - 70 minutes
+    ['home', 'draw', 'away']
+### 1x2 - 80 minutes
+    ['home', 'draw', 'away']
+### 2nd Goal in Interval
+    ['yes', 'no']
+### 2nd Half Exact Goals Number
+    ['0', '1', '2', '3', '4', 'more 5']
+### 2nd Half Winner
+    ['Home', 'Draw', 'Away']
+### 3-Way Handicap
+    ['home[handicap=2.0]', 'draw', 'away[handicap=-2.0]']
+### 3rd Goal in Interval
+    ['yes', 'no']
+### 561127195
+    ['bruno fernandes', 'matheus cunha', 'sorba thomas', 'bryan mbeumo', 'benjamin sesko', 'jesurun rak-sakyi', 'amad diallo', 'casemiro', 'chinonso chibueze', 'sam gallagher', 'aaron cresswell', 'steven nzonzi', 'diogo dalot', 'kobbie mainoo', 'ben pearson', 'junior tchamadeu', 'luke shaw', 'harry maguire', 'maksym talovierov', 'ashley phillips', 'joshua zirkzee']
+### 90007
+    ['over', 'under']
+### Action In Next 1 Minutes
+    ['yes_goal', 'yes_corner', 'yes_card', 'yes_penalty awarded', 'no_goal', 'no_corner', 'no_card', 'no_penalty awarded']
+### Anytime Goal Scorer
+    ['Jayden Adams', 'Samukelo Kabini', 'Cesar Montes', 'Julian Quinones', 'Themba Zwane', 'Thapelo Maseko', 'Ime Okon', 'Kamogelo Sebelebele', 'Khulumani Ndamane', 'Mbekezeli Mbokazi', 'Sphephelo Sithole', 'Tshepang Moremi', 'Thabang Matuludi', 'Lyle Foster', 'Raul Jimenez', 'Edson Alvarez', 'Alexis Vega', 'Guillermo Martinez', 'Cesar Huerta', 'Orbelin Pineda', 'Roberto Alvarado', 'Armando Gonzalez', 'Mateo Chavez', 'Gilberto Mora', 'Jesus Gallardo', 'Alvaro Fidalgo', 'Israel Reyes', 'Johan Vasquez', 'Luis Romo', 'Erik Lira', 'Jorge Sanchez', 'Obed Vargas', 'Brian Gutierrez', 'Olwethu Makhanya', 'Bradley Cross', 'Luis Chavez', 'Iqraam Rayners', 'Evidence Makgopa', 'Relebohile Mofokeng', 'Oswin Appollis', 'Teboho Mokoena', 'Thalente Mbatha', 'Aubrey Modiba', 'Khuliso Mudau', 'Nkosinathi Sibisi', 'Santiago Gimenez']
+### Asian Corners
+    ['Over[handicap=9]', 'Under[handicap=9]']
+### Asian Handicap
+    ['Home[line=-1.25]', 'Away[line=-1.25]', 'Home[line=-1]', 'Away[line=-1]', 'Home[line=-0.75]', 'Away[line=-0.75]', 'Home[line=-0.5]', 'Away[line=-0.5]', 'Home[line=-0.25]', 'Away[line=-0.25]', 'Home[line=+0]', 'Away[line=+0]', 'Home[line=+0.25]', 'Away[line=+0.25]', 'Home[line=+0.5]', 'Away[line=+0.5]', 'Home[line=-2]', 'Away[line=-2]', 'Home[line=-1.75]', 'Away[line=-1.75]', 'Home[line=-1.5]', 'Away[line=-1.5]', 'Home[line=-2.5]', 'Away[line=-2.5]', 'Home[line=-2.25]', 'Away[line=-2.25]', 'Home[line=-2.75]', 'Away[line=-2.75]']
+### Asian Handicap (1st Half)
+    ['home[handicap=1.0]', 'away[handicap=-1.0]']
+### Asian Handicap First Half
+    ['Home[line=-1.25]', 'Away[line=-1.25]', 'Home[line=-1]', 'Away[line=-1]', 'Home[line=-0.75]', 'Away[line=-0.75]', 'Home[line=-0.5]', 'Away[line=-0.5]', 'Home[line=-0.25]', 'Away[line=-0.25]', 'Home[line=+0]', 'Away[line=+0]', 'Home[line=+0.25]', 'Away[line=+0.25]', 'Home[line=+0.5]', 'Away[line=+0.5]', 'Home[line=-1.75]', 'Away[line=-1.75]', 'Home[line=-1.5]', 'Away[line=-1.5]']
+### Away 1st Goal in Interval
+    ['yes', 'no']
+### Away 2nd Goal in Interval
+    ['yes', 'no']
+### Away Anytime Goal Scorer
+    ['Jayden Adams', 'Samukelo Kabini', 'Themba Zwane', 'Thapelo Maseko', 'Ime Okon', 'Kamogelo Sebelebele', 'Khulumani Ndamane', 'Mbekezeli Mbokazi', 'Sphephelo Sithole', 'Tshepang Moremi', 'Thabang Matuludi', 'Lyle Foster', 'Olwethu Makhanya', 'Bradley Cross', 'Iqraam Rayners', 'Evidence Makgopa', 'Relebohile Mofokeng', 'Oswin Appollis', 'Teboho Mokoena', 'Thalente Mbatha', 'Aubrey Modiba', 'Khuliso Mudau', 'Nkosinathi Sibisi']
+### Away Corners Over/Under
+    ['Over[line=3.5]', 'Under[line=3.5]']
+### Away First Goal Scorer
+    ['Jayden Adams', 'Samukelo Kabini', 'Themba Zwane', 'Thapelo Maseko', 'Ime Okon', 'Kamogelo Sebelebele', 'Khulumani Ndamane', 'Mbekezeli Mbokazi', 'Sphephelo Sithole', 'Tshepang Moremi', 'Thabang Matuludi', 'Lyle Foster', 'Olwethu Makhanya', 'Bradley Cross', 'Iqraam Rayners', 'Evidence Makgopa', 'Relebohile Mofokeng', 'Oswin Appollis', 'Teboho Mokoena', 'Thalente Mbatha', 'Aubrey Modiba', 'Khuliso Mudau', 'Nkosinathi Sibisi']
+### Away Goal Method Header
+    ['Jayden Adams', 'Samukelo Kabini', 'Themba Zwane', 'Thapelo Maseko', 'Ime Okon', 'Kamogelo Sebelebele', 'Khulumani Ndamane', 'Mbekezeli Mbokazi', 'Sphephelo Sithole', 'Tshepang Moremi', 'Thabang Matuludi', 'Lyle Foster', 'Olwethu Makhanya', 'Bradley Cross', 'Iqraam Rayners', 'Evidence Makgopa', 'Relebohile Mofokeng', 'Oswin Appollis', 'Teboho Mokoena', 'Thalente Mbatha', 'Aubrey Modiba', 'Khuliso Mudau', 'Nkosinathi Sibisi']
+### Away Highest Scoring Half
+    ['Draw', '1st Half', '2nd Half']
+### Away Last Goal Scorer
+    ['Jayden Adams', 'Samukelo Kabini', 'Themba Zwane', 'Thapelo Maseko', 'Ime Okon', 'Kamogelo Sebelebele', 'Khulumani Ndamane', 'Mbekezeli Mbokazi', 'Sphephelo Sithole', 'Tshepang Moremi', 'Thabang Matuludi', 'Lyle Foster', 'Olwethu Makhanya', 'Bradley Cross', 'Iqraam Rayners', 'Evidence Makgopa', 'Relebohile Mofokeng', 'Oswin Appollis', 'Teboho Mokoena', 'Thalente Mbatha', 'Aubrey Modiba', 'Khuliso Mudau', 'Nkosinathi Sibisi']
+### Away Odd/Even
+    ['Odd', 'Even']
+### Away Player Assists
+    ['Samukelo Kabini', 'Themba Zwane', 'Thapelo Maseko', 'Ime Okon', 'Kamogelo Sebelebele', 'Khulumani Ndamane', 'Mbekezeli Mbokazi', 'Sphephelo Sithole', 'Tshepang Moremi', 'Thabang Matuludi', 'Lyle Foster', 'Olwethu Makhanya', 'Iqraam Rayners', 'Evidence Makgopa', 'Relebohile Mofokeng', 'Oswin Appollis', 'Teboho Mokoena', 'Thalente Mbatha', 'Aubrey Modiba', 'Khuliso Mudau', 'Nkosinathi Sibisi']
+### Away Player Shots
+    ['Lyle Foster - 1+', 'Evidence Makgopa - 1+', 'Iqraam Rayners - 1+', 'Oswin Appollis - 1+', 'Relebohile Mofokeng - 1+', 'Teboho Mokoena - 1+', 'Tshepang Moremi - 1+', 'Kamogelo Sebelebele - 1+', 'Themba Zwane - 1+', 'Jayden Adams - 1+', 'Thalente Mbatha - 1+', 'Thapelo Maseko - 1+', 'Samukelo Kabini - 1+', 'Sphephelo Sithole - 1+', 'Aubrey Modiba - 1+', 'Khulumani Ndamane - 1+', 'Thabang Matuludi - 1+', 'Khuliso Mudau - 1+', 'Mbekezeli Mbokazi - 1+', 'Bradley Cross - 1+', 'Ime Okon - 1+', 'Nkosinathi Sibisi - 1+', 'Olwethu Makhanya - 1+', 'Lyle Foster - 2+', 'Evidence Makgopa - 2+', 'Iqraam Rayners - 2+', 'Oswin Appollis - 2+', 'Relebohile Mofokeng - 2+', 'Teboho Mokoena - 2+', 'Tshepang Moremi - 2+', 'Kamogelo Sebelebele - 2+', 'Themba Zwane - 2+', 'Jayden Adams - 2+', 'Thalente Mbatha - 2+', 'Thapelo Maseko - 2+', 'Samukelo Kabini - 2+', 'Sphephelo Sithole - 2+', 'Aubrey Modiba - 2+', 'Khulumani Ndamane - 2+', 'Thabang Matuludi - 2+', 'Khuliso Mudau - 2+', 'Mbekezeli Mbokazi - 2+', 'Bradley Cross - 2+', 'Ime Okon - 2+', 'Nkosinathi Sibisi - 2+', 'Olwethu Makhanya - 2+', 'Lyle Foster - 3+', 'Evidence Makgopa - 3+', 'Iqraam Rayners - 3+', 'Oswin Appollis - 3+', 'Relebohile Mofokeng - 3+', 'Teboho Mokoena - 3+', 'Tshepang Moremi - 3+', 'Kamogelo Sebelebele - 3+', 'Themba Zwane - 3+', 'Jayden Adams - 3+', 'Thalente Mbatha - 3+', 'Thapelo Maseko - 3+', 'Lyle Foster - 4+', 'Evidence Makgopa - 4+', 'Iqraam Rayners - 4+', 'Oswin Appollis - 4+', 'Relebohile Mofokeng - 4+', 'Teboho Mokoena - 4+', 'Tshepang Moremi - 4+', 'Kamogelo Sebelebele - 4+', 'Themba Zwane - 4+', 'Lyle Foster - 5+', 'Teboho Mokoena - 5+', 'Oswin Appollis - 5+', 'Relebohile Mofokeng - 5+', 'Sphephelo Sithole - 3+', 'Thabang Matuludi - 3+']
+### Away Player Shots On Target Total
+    ['Jayden Adams', 'Samukelo Kabini', 'Cesar Montes', 'Julian Quinones', 'Themba Zwane', 'Thapelo Maseko', 'Ime Okon', 'Kamogelo Sebelebele', 'Khulumani Ndamane', 'Mbekezeli Mbokazi', 'Sphephelo Sithole', 'Tshepang Moremi', 'Thabang Matuludi', 'Lyle Foster', 'Raul Jimenez', 'Edson Alvarez', 'Alexis Vega', 'Guillermo Martinez', 'Cesar Huerta', 'Orbelin Pineda', 'Roberto Alvarado', 'Armando Gonzalez', 'Mateo Chavez', 'Gilberto Mora', 'Jesus Gallardo', 'Alvaro Fidalgo', 'Israel Reyes', 'Johan Vasquez', 'Luis Romo', 'Erik Lira', 'Jorge Sanchez', 'Obed Vargas', 'Brian Gutierrez', 'Olwethu Makhanya', 'Bradley Cross', 'Luis Chavez', 'Iqraam Rayners', 'Evidence Makgopa', 'Relebohile Mofokeng', 'Oswin Appollis', 'Teboho Mokoena', 'Thalente Mbatha', 'Aubrey Modiba', 'Khuliso Mudau', 'Nkosinathi Sibisi', 'Santiago Gimenez']
+### Away Team Exact Goals Number
+    ['0', '1', '2', 'more 3']
+### Away Team Goals
+    ['over', 'under']
+### Away Team Score a Goal (2nd Half)
+    ['yes', 'no']
+### Away Team Total Cards
+    ['Over[line=2.5]', 'Under[line=2.5]']
+### Away Team to Score in Both Halves
+    ['yes', 'no']
+### Away Total Shots
+    ['Over[handicap=10.5]', 'Under[handicap=10.5]']
+### Away Total shots on goal
+    ['Over[handicap=3.5]', 'Under[handicap=3.5]']
+### Both Teams To Score
+    ['Yes', 'No']
+### Both Teams To Score (1st Half)
+    ['yes', 'no']
+### Both Teams To Score (2nd Half)
+    ['yes', 'no']
+### Both Teams To Score - 1st Half
+    ['Yes', 'No']
+### Both Teams To Score - 2nd Half
+    ['Yes', 'No']
+### Both Teams to Score
+    ['yes', 'no']
+### Cards Asian Handicap
+    ['Home[line=+0.5]', 'Away[line=+0.5]', 'Home[line=+1]', 'Away[line=+1]']
+### Cards European Handicap
+    ['Home[line=-1]', 'Away[line=-1]', 'Draw[line=-1]', 'Home[line=+0]', 'Away[line=+0]', 'Draw[line=+0]', 'Home[line=+1]', 'Draw[line=+1]', 'Away[line=+1]', 'Home[line=+2]', 'Draw[line=+2]', 'Away[line=+2]', 'Home[line=+3]', 'Draw[line=+3]', 'Away[line=+3]']
+### Cards Over/Under
+    ['Over[line=3.5]', 'Under[line=3.5]']
+### Cards over/under between 0 and 10 m
+    ['Over', 'Under']
+### Clean Sheet - Away
+    ['Yes', 'No']
+### Clean Sheet - Home
+    ['Yes', 'No']
+### Corners 1x2
+    ['home', 'draw', 'away']
+### Corners Asian Handicap
+    ['Home[line=-2]', 'Away[line=-2]', 'Home[line=-2.5]', 'Away[line=-2.5]']
+### Corners Asian Handicap (1st Half)
+    ['Over[handicap=7]', 'Under[handicap=7]']
+### Corners European Handicap
+    ['home', 'draw', 'away']
+### Corners Over Under
+    ['Over[line=8.5]', 'Under[line=8.5]', 'Over[line=9]', 'Under[line=9]']
+### Corners Race To
+    ['Home[line=3]', 'Away[line=3]', 'Draw[line=3]', 'Home[line=5]', 'Away[line=5]', 'Draw[line=5]', 'Home[line=9]', 'Away[line=9]', 'Draw[line=9]', 'Home[line=7]', 'Away[line=7]', 'Draw[line=7]']
+### Corners. European Handicap
+    ['Home[line=-2]', 'Draw[line=-2]', 'Away[line=-2]']
+### Corners. Total (Range)
+    ['Under 6', '6 - 8', '9 - 11', '12 - 14', 'Over 14']
+### Corners. Total between 0 and 10m
+    ['Over', 'Under']
+### Correct Score
+    ['1:0', '2:0', '2:1', '3:0', '3:1', '3:2', '4:0', '4:1', '0:0', '1:1', '2:2', '0:1', '0:2', '0:3', '1:2', '1:3', '2:3', '3:3', '0:4', '1:4', '2:4', '4:2', '3:4', '5:0', '5:1', '5:2', '6:0', '6:1', '6:2', '4:3', '5:3', '7:0', '7:1']
+### Correct Score (1st Half)
+    ['1:0', '2:0', '2:1', '3:0', '3:1', '3:2', '0:0', '1:1', '2:2', '0:1', '0:2', '1:2', '0:3', '1:3', '2:3', '0:4', '1:4', '2:4', '0:5', '1:5', '0:6']
+### Correct Score 1st Half
+    ['1:0', '2:0', '2:1', '3:0', '3:1', '3:2', '4:0', '4:1', '0:0', '1:1', '2:2', '0:1', '0:2', '0:3', '1:2', '1:3', '2:3', '5:0', '5:1']
+### Double Chance
+    ['Home/Draw', 'Home/Away', 'Draw/Away']
+### Double Chance - 1st Half
+    ['Home/Draw', 'Home/Away', 'Draw/Away']
+### Draw No Bet
+    ['home', 'away']
+### European Handicap (1st Half)
+    ['home', 'draw', 'away']
+### Exact Goals Number
+    ['0', '1', '2', '3', '4', '5', '6', 'more 7']
+### Final Score
+    ['1:0', '2:0', '2:1', '3:0', '3:1', '3:2', '4:0', '4:1', '4:2', '4:3', '0:0', '1:1', '2:2', '3:3', '4:4', '0:1', '0:2', '1:2', '0:3', '1:3', '2:3', '0:4', '1:4', '2:4', '3:4', '0:5', '1:5', '2:5', '3:5', '0:6', '1:6', '2:6', '3:6', '0:7', '1:7', '2:7', '0:8', '1:8', '0:9']
+### First 10 min Winner
+    ['Home', 'Draw', 'Away']
+### First Card Received (3 way)
+    ['Home', 'Draw', 'Away']
+### First Goal Method
+    ['Shot', 'Header', 'Penalty', 'FreeKick', 'OwnGoal', 'Draw']
+### First Goal Scorer
+    ['Jayden Adams', 'Samukelo Kabini', 'No Goalscorer', 'Cesar Montes', 'Julian Quinones', 'Themba Zwane', 'Thapelo Maseko', 'Ime Okon', 'Kamogelo Sebelebele', 'Khulumani Ndamane', 'Mbekezeli Mbokazi', 'Sphephelo Sithole', 'Tshepang Moremi', 'Thabang Matuludi', 'Lyle Foster', 'Raul Jimenez', 'Edson Alvarez', 'Alexis Vega', 'Guillermo Martinez', 'Cesar Huerta', 'Orbelin Pineda', 'Roberto Alvarado', 'Armando Gonzalez', 'Mateo Chavez', 'Gilberto Mora', 'Jesus Gallardo', 'Alvaro Fidalgo', 'Israel Reyes', 'Johan Vasquez', 'Luis Romo', 'Erik Lira', 'Jorge Sanchez', 'Obed Vargas', 'Brian Gutierrez', 'Olwethu Makhanya', 'Bradley Cross', 'Luis Chavez', 'Iqraam Rayners', 'Evidence Makgopa', 'Relebohile Mofokeng', 'Oswin Appollis', 'Teboho Mokoena', 'Thalente Mbatha', 'Aubrey Modiba', 'Khuliso Mudau', 'Nkosinathi Sibisi', 'Santiago Gimenez']
+### Fulltime Result
+    ['home', 'draw', 'away']
+### Game Decided After Penalties
+    ['Yes', 'No']
+### Game Decided in Extra Time
+    ['Yes', 'No']
+### Game Won After Penalties Shootout
+    ['yes', 'no']
+### Game Won In Extra Time
+    ['yes', 'no']
+### Goal Line
+    ['Over[line=1.5]', 'Under[line=1.5]', 'Over[line=1.75]', 'Under[line=1.75]', 'Over[line=2.25]', 'Under[line=2.25]', 'Over[line=2.5]', 'Under[line=2.5]', 'Over[line=2.75]', 'Under[line=2.75]', 'Over[line=3.5]', 'Under[line=3.5]', 'Over[line=2]', 'Under[line=2]', 'Over[line=3]', 'Under[line=3]', 'Over[line=4]', 'Under[line=4]', 'Over[line=1.25]', 'Under[line=1.25]', 'Over[line=3.25]', 'Under[line=3.25]', 'Over[line=3.75]', 'Under[line=3.75]', 'Over[line=4.25]', 'Under[line=4.25]']
+### Goal Line (1st Half)
+    ['Over[line=1.5]', 'Under[line=1.5]', 'Over[line=1.75]', 'Under[line=1.75]', 'Over[line=2.25]', 'Under[line=2.25]', 'Over[line=1]', 'Under[line=1]', 'Over[line=2]', 'Under[line=2]', 'Over[line=0.5]', 'Under[line=0.5]', 'Over[line=0.75]', 'Under[line=0.75]', 'Over[line=1.25]', 'Under[line=1.25]']
+### Goal Method Outside the Box
+    ['Jayden Adams', 'Samukelo Kabini', 'Cesar Montes', 'Julian Quinones', 'Themba Zwane', 'Thapelo Maseko', 'Ime Okon', 'Kamogelo Sebelebele', 'Khulumani Ndamane', 'Mbekezeli Mbokazi', 'Sphephelo Sithole', 'Tshepang Moremi', 'Thabang Matuludi', 'Lyle Foster', 'Raul Jimenez', 'Edson Alvarez', 'Alexis Vega', 'Guillermo Martinez', 'Cesar Huerta', 'Orbelin Pineda', 'Roberto Alvarado', 'Armando Gonzalez', 'Mateo Chavez', 'Gilberto Mora', 'Jesus Gallardo', 'Alvaro Fidalgo', 'Israel Reyes', 'Johan Vasquez', 'Luis Romo', 'Erik Lira', 'Jorge Sanchez', 'Obed Vargas', 'Brian Gutierrez', 'Olwethu Makhanya', 'Bradley Cross', 'Luis Chavez', 'Iqraam Rayners', 'Evidence Makgopa', 'Relebohile Mofokeng', 'Oswin Appollis', 'Teboho Mokoena', 'Thalente Mbatha', 'Aubrey Modiba', 'Khuliso Mudau', 'Nkosinathi Sibisi', 'Santiago Gimenez']
+### Goal Scorer
+    ['karl holmberg', 'antonio yakoub', 'suwaibou kebbeh', 'ahmed yasin', 'jeremiah bjornler', 'taiki kagayama', 'victor sandberg', 'jacob ortmark', 'manasse kusu', 'samuel wikman', 'hugo aviander', 'giuseppe bovalina', 'marc manchon', 'joshua mambu', 'john stenberg', 'alex pantelidis', 'christopher redenstrand', 'malte hallin', 'nils eriksson', 'lucas forsberg', 'no 1st goal']
+### Goalkeeper Saves
+    ['Ronwen Williams', 'Ronwen Williams - 2+', 'Ronwen Williams - 3+', 'Ronwen Williams - 4+', 'Ronwen Williams - 5+', 'Ronwen Williams - 6+', 'Ronwen Williams - 7+', 'Francisco Ochoa - 2+', 'Jose Rangel - 2+', 'Francisco Ochoa - 4+', 'Francisco Ochoa - 1+', 'Jose Rangel - 1+', 'Francisco Ochoa - 3+', 'Jose Rangel - 3+', 'Jose Rangel - 4+', 'Francisco Ochoa', 'Ronwen Williams - 1+']
+### Goals Odd/Even
+    ['odd', 'even']
+### Goals Over/Under
+    ['Over[line=1.5]', 'Under[line=1.5]', 'Over[line=2.5]', 'Under[line=2.5]', 'Over[line=3.5]', 'Under[line=3.5]', 'Over[line=0.5]', 'Under[line=0.5]', 'Over[line=4.5]', 'Under[line=4.5]', 'Over[line=5.5]', 'Under[line=5.5]', 'Over[line=6.5]', 'Under[line=6.5]']
+### Goals Over/Under 2nd Half
+    ['Over[line=1.5]', 'Under[line=1.5]', 'Over[line=2.5]', 'Under[line=2.5]', 'Over[line=3.5]', 'Under[line=3.5]', 'Over[line=0.5]', 'Under[line=0.5]']
+### HT/FT Double
+    ['Home/Draw', 'Home/Away', 'Draw/Away', 'Draw/Draw', 'Home/Home', 'Draw/Home', 'Away/Home', 'Away/Draw', 'Away/Away']
+### Half Time/Full Time
+    ['1/1', '1/x', '1/2', 'x/1', 'x/x', 'x/2', '2/1', '2/x', '2/2']
+### Handicap Result
+    ['Home[line=-1]', 'Away[line=-1]', 'Draw[line=-1]', 'Home[line=-3]', 'Draw[line=-3]', 'Away[line=-3]', 'Home[line=-2]', 'Draw[line=-2]', 'Away[line=-2]', 'Home[line=+1]', 'Draw[line=+1]', 'Away[line=+1]', 'Home[line=+2]', 'Draw[line=+2]', 'Away[line=+2]']
+### Handicap Result 1st Half
+    ['Home[line=-1]', 'Away[line=-1]', 'Draw[line=-1]', 'Home[line=-3]', 'Draw[line=-3]', 'Away[line=-3]', 'Home[line=-2]', 'Draw[line=-2]', 'Away[line=-2]', 'Home[line=+1]', 'Draw[line=+1]', 'Away[line=+1]']
+### Highest Scoring Half
+    ['Draw', '1st Half', '2nd Half']
+### Home 1st Goal in Interval
+    ['yes', 'no']
+### Home 2nd Goal in Interval
+    ['yes', 'no']
+### Home 3rd Goal in Interval
+    ['yes', 'no']
+### Home Anytime Goal Scorer
+    ['Cesar Montes', 'Julian Quinones', 'Raul Jimenez', 'Edson Alvarez', 'Alexis Vega', 'Guillermo Martinez', 'Cesar Huerta', 'Orbelin Pineda', 'Roberto Alvarado', 'Armando Gonzalez', 'Mateo Chavez', 'Gilberto Mora', 'Jesus Gallardo', 'Alvaro Fidalgo', 'Israel Reyes', 'Johan Vasquez', 'Luis Romo', 'Erik Lira', 'Jorge Sanchez', 'Obed Vargas', 'Brian Gutierrez', 'Luis Chavez', 'Santiago Gimenez']
+### Home Corners Over/Under
+    ['Over[line=5.5]', 'Under[line=5.5]']
+### Home First Goal Scorer
+    ['Cesar Montes', 'Julian Quinones', 'Raul Jimenez', 'Edson Alvarez', 'Alexis Vega', 'Guillermo Martinez', 'Cesar Huerta', 'Orbelin Pineda', 'Roberto Alvarado', 'Armando Gonzalez', 'Mateo Chavez', 'Gilberto Mora', 'Jesus Gallardo', 'Alvaro Fidalgo', 'Israel Reyes', 'Johan Vasquez', 'Luis Romo', 'Erik Lira', 'Jorge Sanchez', 'Obed Vargas', 'Brian Gutierrez', 'Luis Chavez', 'Santiago Gimenez']
+### Home Goal Method Header
+    ['Cesar Montes', 'Julian Quinones', 'Raul Jimenez', 'Edson Alvarez', 'Alexis Vega', 'Guillermo Martinez', 'Cesar Huerta', 'Orbelin Pineda', 'Roberto Alvarado', 'Armando Gonzalez', 'Mateo Chavez', 'Gilberto Mora', 'Jesus Gallardo', 'Alvaro Fidalgo', 'Israel Reyes', 'Johan Vasquez', 'Luis Romo', 'Erik Lira', 'Jorge Sanchez', 'Obed Vargas', 'Brian Gutierrez', 'Luis Chavez', 'Santiago Gimenez']
+### Home Highest Scoring Half
+    ['Draw', '1st Half', '2nd Half']
+### Home Last Goal Scorer
+    ['Cesar Montes', 'Julian Quinones', 'Raul Jimenez', 'Edson Alvarez', 'Alexis Vega', 'Guillermo Martinez', 'Cesar Huerta', 'Orbelin Pineda', 'Roberto Alvarado', 'Armando Gonzalez', 'Mateo Chavez', 'Gilberto Mora', 'Jesus Gallardo', 'Alvaro Fidalgo', 'Israel Reyes', 'Johan Vasquez', 'Luis Romo', 'Erik Lira', 'Jorge Sanchez', 'Obed Vargas', 'Brian Gutierrez', 'Luis Chavez', 'Santiago Gimenez']
+### Home Odd/Even
+    ['Odd', 'Even']
+### Home Player Shots
+    ['Cesar Huerta - 1+', 'Julian Quinones - 1+', 'Raul Jimenez - 1+', 'Santiago Gimenez - 1+', 'Armando Gonzalez - 1+', 'Guillermo Martinez - 1+', 'Alexis Vega - 1+', 'Brian Gutierrez - 1+', 'Orbelin Pineda - 1+', 'Alvaro Fidalgo - 1+', 'Gilberto Mora - 1+', 'Roberto Alvarado - 1+', 'Jesus Gallardo - 1+', 'Luis Chavez - 1+', 'Obed Vargas - 1+', 'Luis Romo - 1+', 'Cesar Montes - 1+', 'Edson Alvarez - 1+', 'Erik Lira - 1+', 'Israel Reyes - 1+', 'Johan Vasquez - 1+', 'Mateo Chavez - 1+', 'Jorge Sanchez - 1+', 'Cesar Huerta - 2+', 'Julian Quinones - 2+', 'Raul Jimenez - 2+', 'Santiago Gimenez - 2+', 'Armando Gonzalez - 2+', 'Guillermo Martinez - 2+', 'Alexis Vega - 2+', 'Brian Gutierrez - 2+', 'Orbelin Pineda - 2+', 'Alvaro Fidalgo - 2+', 'Gilberto Mora - 2+', 'Roberto Alvarado - 2+', 'Jesus Gallardo - 2+', 'Luis Chavez - 2+', 'Obed Vargas - 2+', 'Luis Romo - 2+', 'Cesar Montes - 2+', 'Edson Alvarez - 2+', 'Erik Lira - 2+', 'Israel Reyes - 2+', 'Johan Vasquez - 2+', 'Mateo Chavez - 2+', 'Jorge Sanchez - 2+', 'Cesar Huerta - 3+', 'Julian Quinones - 3+', 'Raul Jimenez - 3+', 'Santiago Gimenez - 3+', 'Armando Gonzalez - 3+', 'Guillermo Martinez - 3+', 'Alexis Vega - 3+', 'Brian Gutierrez - 3+', 'Orbelin Pineda - 3+', 'Alvaro Fidalgo - 3+', 'Gilberto Mora - 3+', 'Roberto Alvarado - 3+', 'Jesus Gallardo - 3+', 'Luis Chavez - 3+', 'Obed Vargas - 3+', 'Luis Romo - 3+', 'Cesar Montes - 3+', 'Edson Alvarez - 3+', 'Erik Lira - 3+', 'Israel Reyes - 3+', 'Johan Vasquez - 3+', 'Mateo Chavez - 3+', 'Jorge Sanchez - 3+', 'Cesar Huerta - 4+', 'Julian Quinones - 4+', 'Raul Jimenez - 4+', 'Santiago Gimenez - 4+', 'Armando Gonzalez - 4+', 'Guillermo Martinez - 4+', 'Alexis Vega - 4+', 'Brian Gutierrez - 4+', 'Orbelin Pineda - 4+', 'Alvaro Fidalgo - 4+', 'Gilberto Mora - 4+', 'Roberto Alvarado - 4+', 'Jesus Gallardo - 4+', 'Luis Chavez - 4+', 'Obed Vargas - 4+', 'Luis Romo - 4+', 'Cesar Montes - 4+', 'Edson Alvarez - 4+', 'Cesar Huerta - 5+', 'Julian Quinones - 5+', 'Raul Jimenez - 5+', 'Santiago Gimenez - 5+', 'Armando Gonzalez - 5+', 'Guillermo Martinez - 5+', 'Alexis Vega - 5+', 'Brian Gutierrez - 5+', 'Orbelin Pineda - 5+', 'Alvaro Fidalgo - 5+', 'Gilberto Mora - 5+', 'Roberto Alvarado - 5+', 'Jesus Gallardo - 5+', 'Luis Chavez - 5+', 'Cesar Huerta - 6+', 'Julian Quinones - 6+', 'Raul Jimenez - 6+', 'Santiago Gimenez - 6+', 'Armando Gonzalez - 6+', 'Guillermo Martinez - 6+', 'Alexis Vega - 6+', 'Brian Gutierrez - 6+', 'Orbelin Pineda - 6+', 'Alvaro Fidalgo - 6+', 'Gilberto Mora - 6+', 'Roberto Alvarado - 6+', 'Cesar Huerta - 7+', 'Julian Quinones - 7+', 'Raul Jimenez - 7+', 'Santiago Gimenez - 7+', 'Armando Gonzalez - 7+', 'Guillermo Martinez - 7+', 'Alexis Vega - 7+', 'Brian Gutierrez - 7+', 'Julian Quinones - 8+', 'Raul Jimenez - 8+', 'Santiago Gimenez - 8+']
+### Home Player Shots On Target Total
+    ['Cesar Huerta - 1+', 'Julian Quinones - 1+', 'Raul Jimenez - 1+', 'Santiago Gimenez - 1+', 'Armando Gonzalez - 1+', 'Guillermo Martinez - 1+', 'Alexis Vega - 1+', 'Brian Gutierrez - 1+', 'Orbelin Pineda - 1+', 'Alvaro Fidalgo - 1+', 'Gilberto Mora - 1+', 'Roberto Alvarado - 1+', 'Jesus Gallardo - 1+', 'Luis Chavez - 1+', 'Obed Vargas - 1+', 'Luis Romo - 1+', 'Cesar Montes - 1+', 'Edson Alvarez - 1+', 'Erik Lira - 1+', 'Israel Reyes - 1+', 'Johan Vasquez - 1+', 'Mateo Chavez - 1+', 'Jorge Sanchez - 1+', 'Cesar Huerta - 2+', 'Julian Quinones - 2+', 'Raul Jimenez - 2+', 'Santiago Gimenez - 2+', 'Armando Gonzalez - 2+', 'Guillermo Martinez - 2+', 'Alexis Vega - 2+', 'Brian Gutierrez - 2+', 'Orbelin Pineda - 2+', 'Alvaro Fidalgo - 2+', 'Gilberto Mora - 2+', 'Roberto Alvarado - 2+', 'Jesus Gallardo - 2+', 'Luis Chavez - 2+', 'Obed Vargas - 2+', 'Luis Romo - 2+', 'Cesar Montes - 2+', 'Edson Alvarez - 2+', 'Erik Lira - 2+', 'Israel Reyes - 2+', 'Johan Vasquez - 2+', 'Mateo Chavez - 2+', 'Cesar Huerta - 3+', 'Julian Quinones - 3+', 'Raul Jimenez - 3+', 'Santiago Gimenez - 3+', 'Armando Gonzalez - 3+', 'Guillermo Martinez - 3+', 'Alexis Vega - 3+', 'Brian Gutierrez - 3+', 'Orbelin Pineda - 3+', 'Alvaro Fidalgo - 3+', 'Gilberto Mora - 3+', 'Roberto Alvarado - 3+', 'Jesus Gallardo - 3+', 'Luis Chavez - 3+', 'Cesar Huerta - 4+', 'Julian Quinones - 4+', 'Raul Jimenez - 4+', 'Santiago Gimenez - 4+', 'Armando Gonzalez - 4+', 'Guillermo Martinez - 4+', 'Alexis Vega - 4+']
+### Home Team  to Score in Both Halves
+    ['yes', 'no']
+### Home Team Exact Goals Number
+    ['0', '1', '2', 'more 3']
+### Home Team Goals
+    ['Over[handicap=2.5]', 'Under[handicap=2.5]', 'Over[handicap=1.5]', 'Under[handicap=1.5]']
+### Home Team Score a Goal (2nd Half)
+    ['yes', 'no']
+### Home Team Total Cards
+    ['Over[line=1.5]', 'Under[line=1.5]']
+### Home Total Shots
+    ['Over[handicap=9.5]', 'Under[handicap=9.5]']
+### Home Total shots on goal
+    ['Over[handicap=4.5]', 'Under[handicap=4.5]']
+### Home/Away
+    ['Home', 'Away']
+### How many goals will Away Team score?
+    ['draw', 'home', 'away', '3 or more']
+### How many goals will Home Team score?
+    ['draw', 'home', 'away', '3 or more']
+### Last Corner
+    ['home', 'away']
+### Last Goal Scorer
+    ['Jayden Adams', 'Samukelo Kabini', 'No Goalscorer', 'Cesar Montes', 'Julian Quinones', 'Themba Zwane', 'Thapelo Maseko', 'Ime Okon', 'Kamogelo Sebelebele', 'Khulumani Ndamane', 'Mbekezeli Mbokazi', 'Sphephelo Sithole', 'Tshepang Moremi', 'Thabang Matuludi', 'Lyle Foster', 'Raul Jimenez', 'Edson Alvarez', 'Alexis Vega', 'Guillermo Martinez', 'Cesar Huerta', 'Orbelin Pineda', 'Roberto Alvarado', 'Armando Gonzalez', 'Mateo Chavez', 'Gilberto Mora', 'Jesus Gallardo', 'Alvaro Fidalgo', 'Israel Reyes', 'Johan Vasquez', 'Luis Romo', 'Erik Lira', 'Jorge Sanchez', 'Obed Vargas', 'Brian Gutierrez', 'Olwethu Makhanya', 'Bradley Cross', 'Luis Chavez', 'Iqraam Rayners', 'Evidence Makgopa', 'Relebohile Mofokeng', 'Oswin Appollis', 'Teboho Mokoena', 'Thalente Mbatha', 'Aubrey Modiba', 'Khuliso Mudau', 'Nkosinathi Sibisi', 'Santiago Gimenez']
+### Last Team to Score (3 way)
+    ['home', 'draw', 'away']
+### Match Corners
+    ['over', 'exactly', 'under']
+### Match Goals
+    ['over[handicap=3.5]', 'under[handicap=3.5]']
+### Match Winner
+    ['Home', 'Draw', 'Away']
+### Method of 1st Goal
+    ['shot', 'header', 'penalty', 'free kick', 'own goal', 'draw']
+### Method of 2nd Goal
+    ['shot', 'header', 'penalty', 'free kick', 'own goal', 'draw']
+### Method of 3rd Goal
+    ['shot', 'header', 'penalty', 'free kick', 'own goal', 'draw']
+### Method of Victory
+    ['1/90 Mins', '1/Penalties', '2/90 Mins', '2/Penalties']
+### Multicorners
+    ['Over[line=17.5]', 'Under[line=17.5]']
+### Next 10 Minutes Total
+    ['goals/over  0.5', 'goals/under  0.5', 'corners 3-way/over  1.5', 'corners 3-way/under  1.5']
+### Odd/Even
+    ['Odd', 'Even']
+### Odd/Even (2nd Half)
+    ['Odd', 'Even']
+### Odd/Even 1st Half
+    ['Odd', 'Even']
+### Offsides Away Total
+    ['Over[line=1.5]', 'Under[line=1.5]']
+### Offsides Home Total
+    ['Over[line=1.5]', 'Under[line=1.5]', 'Over[line=2.5]', 'Under[line=2.5]']
+### Offsides Total
+    ['Over[line=3.5]', 'Under[line=3.5]']
+### Over/Under (1st Half)
+    ['over[handicap=1.5]', 'under[handicap=1.5]']
+### Over/Under Line
+    ['over[handicap=3.0]', 'under[handicap=3.0]']
+### Over/Under Line (1st Half)
+    ['over[handicap=1.5]', 'under[handicap=1.5]']
+### Own Goal
+    ['Yes', 'No']
+### Player Assists
+    ['Samukelo Kabini', 'Cesar Montes', 'Julian Quinones', 'Themba Zwane', 'Thapelo Maseko', 'Ime Okon', 'Yes', 'No', 'Kamogelo Sebelebele', 'Khulumani Ndamane', 'Mbekezeli Mbokazi', 'Sphephelo Sithole', 'Tshepang Moremi', 'Thabang Matuludi', 'Lyle Foster', 'Raul Jimenez', 'Edson Alvarez', 'Alexis Vega', 'Guillermo Martinez', 'Cesar Huerta', 'Orbelin Pineda', 'Roberto Alvarado', 'Armando Gonzalez', 'Mateo Chavez', 'Gilberto Mora', 'Jesus Gallardo', 'Alvaro Fidalgo', 'Israel Reyes', 'Johan Vasquez', 'Luis Romo', 'Erik Lira', 'Jorge Sanchez', 'Obed Vargas', 'Brian Gutierrez', 'Olwethu Makhanya', 'Luis Chavez', 'Iqraam Rayners', 'Evidence Makgopa', 'Relebohile Mofokeng', 'Oswin Appollis', 'Teboho Mokoena', 'Thalente Mbatha', 'Aubrey Modiba', 'Khuliso Mudau', 'Nkosinathi Sibisi', 'Santiago Gimenez']
+### Player Fouls Committed
+    ['Cesar Huerta - 1+', 'Julian Quinones - 1+', 'Raul Jimenez - 1+', 'Santiago Gimenez - 1+', 'Armando Gonzalez - 1+', 'Guillermo Martinez - 1+', 'Alexis Vega - 1+', 'Brian Gutierrez - 1+', 'Orbelin Pineda - 1+', 'Alvaro Fidalgo - 1+', 'Gilberto Mora - 1+', 'Roberto Alvarado - 1+', 'Jesus Gallardo - 1+', 'Luis Chavez - 1+', 'Obed Vargas - 1+', 'Luis Romo - 1+', 'Cesar Montes - 1+', 'Edson Alvarez - 1+', 'Erik Lira - 1+', 'Israel Reyes - 1+', 'Johan Vasquez - 1+', 'Mateo Chavez - 1+', 'Jorge Sanchez - 1+', 'Cesar Huerta - 2+', 'Julian Quinones - 2+', 'Raul Jimenez - 2+', 'Santiago Gimenez - 2+', 'Armando Gonzalez - 2+', 'Guillermo Martinez - 2+', 'Alexis Vega - 2+', 'Brian Gutierrez - 2+', 'Orbelin Pineda - 2+', 'Alvaro Fidalgo - 2+', 'Gilberto Mora - 2+', 'Roberto Alvarado - 2+', 'Jesus Gallardo - 2+', 'Luis Chavez - 2+', 'Obed Vargas - 2+', 'Luis Romo - 2+', 'Cesar Montes - 2+', 'Edson Alvarez - 2+', 'Erik Lira - 2+', 'Israel Reyes - 2+', 'Johan Vasquez - 2+', 'Mateo Chavez - 2+', 'Jorge Sanchez - 2+', 'Cesar Huerta - 3+', 'Julian Quinones - 3+', 'Raul Jimenez - 3+', 'Santiago Gimenez - 3+', 'Armando Gonzalez - 3+', 'Guillermo Martinez - 3+', 'Alexis Vega - 3+', 'Brian Gutierrez - 3+', 'Orbelin Pineda - 3+', 'Alvaro Fidalgo - 3+', 'Gilberto Mora - 3+', 'Roberto Alvarado - 3+', 'Jesus Gallardo - 3+', 'Luis Chavez - 3+', 'Obed Vargas - 3+', 'Luis Romo - 3+', 'Cesar Montes - 3+', 'Edson Alvarez - 3+', 'Erik Lira - 3+', 'Israel Reyes - 3+', 'Johan Vasquez - 3+', 'Mateo Chavez - 3+', 'Jorge Sanchez - 3+', 'Cesar Huerta - 4+', 'Julian Quinones - 4+', 'Raul Jimenez - 4+', 'Santiago Gimenez - 4+', 'Armando Gonzalez - 4+', 'Guillermo Martinez - 4+', 'Alexis Vega - 4+', 'Brian Gutierrez - 4+', 'Orbelin Pineda - 4+', 'Alvaro Fidalgo - 4+', 'Gilberto Mora - 4+', 'Jesus Gallardo - 4+', 'Luis Chavez - 4+', 'Luis Romo - 4+', 'Cesar Montes - 4+', 'Edson Alvarez - 4+', 'Erik Lira - 4+', 'Israel Reyes - 4+', 'Johan Vasquez - 4+', 'Cesar Huerta - 5+', 'Raul Jimenez - 5+', 'Guillermo Martinez - 5+', 'Brian Gutierrez - 5+', 'Jesus Gallardo - 5+', 'Guillermo Martinez - 6+', 'Lyle Foster - 1+', 'Evidence Makgopa - 1+', 'Iqraam Rayners - 1+', 'Oswin Appollis - 1+', 'Relebohile Mofokeng - 1+', 'Teboho Mokoena - 1+', 'Tshepang Moremi - 1+', 'Kamogelo Sebelebele - 1+', 'Themba Zwane - 1+', 'Jayden Adams - 1+', 'Thalente Mbatha - 1+', 'Thapelo Maseko - 1+', 'Samukelo Kabini - 1+', 'Sphephelo Sithole - 1+', 'Aubrey Modiba - 1+', 'Khulumani Ndamane - 1+', 'Thabang Matuludi - 1+', 'Khuliso Mudau - 1+', 'Mbekezeli Mbokazi - 1+', 'Bradley Cross - 1+', 'Ime Okon - 1+', 'Nkosinathi Sibisi - 1+', 'Olwethu Makhanya - 1+', 'Lyle Foster - 2+', 'Evidence Makgopa - 2+', 'Iqraam Rayners - 2+', 'Oswin Appollis - 2+', 'Relebohile Mofokeng - 2+', 'Teboho Mokoena - 2+', 'Tshepang Moremi - 2+', 'Kamogelo Sebelebele - 2+', 'Themba Zwane - 2+', 'Jayden Adams - 2+', 'Thalente Mbatha - 2+', 'Thapelo Maseko - 2+', 'Samukelo Kabini - 2+', 'Sphephelo Sithole - 2+', 'Aubrey Modiba - 2+', 'Khulumani Ndamane - 2+', 'Thabang Matuludi - 2+', 'Khuliso Mudau - 2+', 'Mbekezeli Mbokazi - 2+', 'Bradley Cross - 2+', 'Ime Okon - 2+', 'Nkosinathi Sibisi - 2+', 'Olwethu Makhanya - 2+', 'Lyle Foster - 3+', 'Evidence Makgopa - 3+', 'Iqraam Rayners - 3+', 'Oswin Appollis - 3+', 'Relebohile Mofokeng - 3+', 'Teboho Mokoena - 3+', 'Tshepang Moremi - 3+', 'Kamogelo Sebelebele - 3+', 'Themba Zwane - 3+', 'Jayden Adams - 3+', 'Thalente Mbatha - 3+', 'Thapelo Maseko - 3+', 'Lyle Foster - 4+', 'Evidence Makgopa - 4+', 'Iqraam Rayners - 4+', 'Oswin Appollis - 4+', 'Teboho Mokoena - 4+', 'Tshepang Moremi - 4+', 'Kamogelo Sebelebele - 4+', 'Themba Zwane - 4+', 'Teboho Mokoena - 5+', 'Sphephelo Sithole - 3+', 'Bradley Cross - 3+', 'Samukelo Kabini - 3+', 'Aubrey Modiba - 3+', 'Khuliso Mudau - 3+', 'Thabang Matuludi - 3+', 'Khulumani Ndamane - 3+', 'Ime Okon - 3+', 'Olwethu Makhanya - 3+', 'Mbekezeli Mbokazi - 3+', 'Nkosinathi Sibisi - 3+', 'Mateo Chavez - 4+', 'Bradley Cross - 4+', 'Jayden Adams - 4+', 'Sphephelo Sithole - 4+', 'Thapelo Maseko - 4+', 'Jorge Sanchez - 4+', 'Samukelo Kabini - 4+', 'Aubrey Modiba - 4+', 'Khuliso Mudau - 4+', 'Thabang Matuludi - 4+', 'Khulumani Ndamane - 4+', 'Ime Okon - 4+', 'Olwethu Makhanya - 4+', 'Thalente Mbatha - 4+', 'Mateo Chavez - 5+', 'Bradley Cross - 5+', 'Jayden Adams - 5+', 'Sphephelo Sithole - 5+', 'Tshepang Moremi - 5+', 'Edson Alvarez - 5+', 'Evidence Makgopa - 5+', 'Thapelo Maseko - 5+', 'Jorge Sanchez - 5+', 'Mateo Chavez - 6+', 'Khuliso Mudau - 5+', 'Erik Lira - 5+']
+### Player Passes
+    ['Cesar Montes -  55+', 'Edson Alvarez -  63+', 'Jesus Gallardo -  34+', 'Julian Quinones -  30+', 'Aubrey Modiba -  32+', 'Ime Okon -  35+', 'Sphephelo Sithole -  40+', 'Tshepang Moremi -  26+', 'Cesar Montes -  59+', 'Edson Alvarez -  68+', 'Jesus Gallardo -  37+', 'Julian Quinones -  33+', 'Aubrey Modiba -  35+', 'Ime Okon -  38+', 'Sphephelo Sithole -  44+', 'Tshepang Moremi -  29+', 'Cesar Montes -  63+', 'Edson Alvarez -  73+', 'Jesus Gallardo -  40+', 'Julian Quinones -  36+', 'Aubrey Modiba -  38+', 'Ime Okon -  41+', 'Sphephelo Sithole -  48+', 'Tshepang Moremi -  32+', 'Cesar Montes -  67+', 'Edson Alvarez -  78+', 'Jesus Gallardo -  43+', 'Julian Quinones -  39+', 'Aubrey Modiba -  41+', 'Ime Okon -  44+', 'Sphephelo Sithole -  52+', 'Tshepang Moremi -  35+', 'Cesar Montes -  71+', 'Edson Alvarez -  83+', 'Jesus Gallardo -  46+', 'Julian Quinones -  42+', 'Aubrey Modiba -  44+', 'Ime Okon -  47+', 'Sphephelo Sithole -  56+', 'Tshepang Moremi -  38+', 'Cesar Montes -  75+', 'Jesus Gallardo -  49+', 'Julian Quinones -  45+', 'Aubrey Modiba -  47+', 'Ime Okon -  50+', 'Jesus Gallardo -  52+', 'Ime Okon -  53+', 'Ime Okon -  37+', 'Ime Okon -  40+', 'Ime Okon -  43+', 'Ime Okon -  46+', 'Ime Okon -  49+', 'Ime Okon -  52+', 'Ime Okon -  55+', 'Cesar Montes -  57+', 'Cesar Montes -  62+', 'Cesar Montes -  72+', 'Cesar Montes -  77+', 'Jesus Gallardo -  36+', 'Jesus Gallardo -  39+', 'Jesus Gallardo -  42+', 'Jesus Gallardo -  45+', 'Jesus Gallardo -  48+', 'Jesus Gallardo -  51+', 'Jesus Gallardo -  54+']
+### Player Shots
+    ['Raul Jimenez[line=]', 'Cesar Huerta - 1+[line=]', 'Julian Quinones - 1+[line=]', 'Raul Jimenez - 1+[line=]', 'Santiago Gimenez - 1+[line=]', 'Armando Gonzalez - 1+[line=]', 'Guillermo Martinez - 1+[line=]', 'Alexis Vega - 1+[line=]', 'Brian Gutierrez - 1+[line=]', 'Orbelin Pineda - 1+[line=]', 'Alvaro Fidalgo - 1+[line=]', 'Gilberto Mora - 1+[line=]', 'Roberto Alvarado - 1+[line=]', 'Jesus Gallardo - 1+[line=]', 'Luis Chavez - 1+[line=]', 'Obed Vargas - 1+[line=]', 'Luis Romo - 1+[line=]', 'Cesar Montes - 1+[line=]', 'Edson Alvarez - 1+[line=]', 'Erik Lira - 1+[line=]', 'Israel Reyes - 1+[line=]', 'Johan Vasquez - 1+[line=]', 'Mateo Chavez - 1+[line=]', 'Jorge Sanchez - 1+[line=]', 'Cesar Huerta - 2+[line=]', 'Julian Quinones - 2+[line=]', 'Raul Jimenez - 2+[line=]', 'Santiago Gimenez - 2+[line=]', 'Armando Gonzalez - 2+[line=]', 'Guillermo Martinez - 2+[line=]', 'Alexis Vega - 2+[line=]', 'Brian Gutierrez - 2+[line=]', 'Orbelin Pineda - 2+[line=]', 'Alvaro Fidalgo - 2+[line=]', 'Gilberto Mora - 2+[line=]', 'Roberto Alvarado - 2+[line=]', 'Jesus Gallardo - 2+[line=]', 'Luis Chavez - 2+[line=]', 'Obed Vargas - 2+[line=]', 'Luis Romo - 2+[line=]', 'Cesar Montes - 2+[line=]', 'Edson Alvarez - 2+[line=]', 'Erik Lira - 2+[line=]', 'Israel Reyes - 2+[line=]', 'Johan Vasquez - 2+[line=]', 'Mateo Chavez - 2+[line=]', 'Jorge Sanchez - 2+[line=]', 'Cesar Huerta - 3+[line=]', 'Julian Quinones - 3+[line=]', 'Raul Jimenez - 3+[line=]', 'Santiago Gimenez - 3+[line=]', 'Armando Gonzalez - 3+[line=]', 'Guillermo Martinez - 3+[line=]', 'Alexis Vega - 3+[line=]', 'Brian Gutierrez - 3+[line=]', 'Orbelin Pineda - 3+[line=]', 'Alvaro Fidalgo - 3+[line=]', 'Gilberto Mora - 3+[line=]', 'Roberto Alvarado - 3+[line=]', 'Jesus Gallardo - 3+[line=]', 'Luis Chavez - 3+[line=]', 'Obed Vargas - 3+[line=]', 'Luis Romo - 3+[line=]', 'Cesar Montes - 3+[line=]', 'Edson Alvarez - 3+[line=]', 'Erik Lira - 3+[line=]', 'Israel Reyes - 3+[line=]', 'Johan Vasquez - 3+[line=]', 'Mateo Chavez - 3+[line=]', 'Jorge Sanchez - 3+[line=]', 'Cesar Huerta - 4+[line=]', 'Julian Quinones - 4+[line=]', 'Raul Jimenez - 4+[line=]', 'Santiago Gimenez - 4+[line=]', 'Armando Gonzalez - 4+[line=]', 'Guillermo Martinez - 4+[line=]', 'Alexis Vega - 4+[line=]', 'Brian Gutierrez - 4+[line=]', 'Orbelin Pineda - 4+[line=]', 'Alvaro Fidalgo - 4+[line=]', 'Gilberto Mora - 4+[line=]', 'Roberto Alvarado - 4+[line=]', 'Jesus Gallardo - 4+[line=]', 'Luis Chavez - 4+[line=]', 'Obed Vargas - 4+[line=]', 'Luis Romo - 4+[line=]', 'Cesar Montes - 4+[line=]', 'Edson Alvarez - 4+[line=]', 'Cesar Huerta - 5+[line=]', 'Julian Quinones - 5+[line=]', 'Raul Jimenez - 5+[line=]', 'Santiago Gimenez - 5+[line=]', 'Armando Gonzalez - 5+[line=]', 'Guillermo Martinez - 5+[line=]', 'Alexis Vega - 5+[line=]', 'Brian Gutierrez - 5+[line=]', 'Orbelin Pineda - 5+[line=]', 'Alvaro Fidalgo - 5+[line=]', 'Gilberto Mora - 5+[line=]', 'Roberto Alvarado - 5+[line=]', 'Jesus Gallardo - 5+[line=]', 'Luis Chavez - 5+[line=]', 'Cesar Huerta - 6+[line=]', 'Julian Quinones - 6+[line=]', 'Raul Jimenez - 6+[line=]', 'Santiago Gimenez - 6+[line=]', 'Armando Gonzalez - 6+[line=]', 'Guillermo Martinez - 6+[line=]', 'Alexis Vega - 6+[line=]', 'Brian Gutierrez - 6+[line=]', 'Orbelin Pineda - 6+[line=]', 'Alvaro Fidalgo - 6+[line=]', 'Gilberto Mora - 6+[line=]', 'Roberto Alvarado - 6+[line=]', 'Cesar Huerta - 7+[line=]', 'Julian Quinones - 7+[line=]', 'Raul Jimenez - 7+[line=]', 'Santiago Gimenez - 7+[line=]', 'Armando Gonzalez - 7+[line=]', 'Guillermo Martinez - 7+[line=]', 'Alexis Vega - 7+[line=]', 'Brian Gutierrez - 7+[line=]', 'Julian Quinones - 8+[line=]', 'Raul Jimenez - 8+[line=]', 'Santiago Gimenez - 8+[line=]', 'Lyle Foster - 1+[line=]', 'Evidence Makgopa - 1+[line=]', 'Iqraam Rayners - 1+[line=]', 'Oswin Appollis - 1+[line=]', 'Relebohile Mofokeng - 1+[line=]', 'Teboho Mokoena - 1+[line=]', 'Tshepang Moremi - 1+[line=]', 'Kamogelo Sebelebele - 1+[line=]', 'Themba Zwane - 1+[line=]', 'Jayden Adams - 1+[line=]', 'Thalente Mbatha - 1+[line=]', 'Thapelo Maseko - 1+[line=]', 'Samukelo Kabini - 1+[line=]', 'Sphephelo Sithole - 1+[line=]', 'Aubrey Modiba - 1+[line=]', 'Khulumani Ndamane - 1+[line=]', 'Thabang Matuludi - 1+[line=]', 'Khuliso Mudau - 1+[line=]', 'Mbekezeli Mbokazi - 1+[line=]', 'Bradley Cross - 1+[line=]', 'Ime Okon - 1+[line=]', 'Nkosinathi Sibisi - 1+[line=]', 'Olwethu Makhanya - 1+[line=]', 'Lyle Foster - 2+[line=]', 'Evidence Makgopa - 2+[line=]', 'Iqraam Rayners - 2+[line=]', 'Oswin Appollis - 2+[line=]', 'Relebohile Mofokeng - 2+[line=]', 'Teboho Mokoena - 2+[line=]', 'Tshepang Moremi - 2+[line=]', 'Kamogelo Sebelebele - 2+[line=]', 'Themba Zwane - 2+[line=]', 'Jayden Adams - 2+[line=]', 'Thalente Mbatha - 2+[line=]', 'Thapelo Maseko - 2+[line=]', 'Samukelo Kabini - 2+[line=]', 'Sphephelo Sithole - 2+[line=]', 'Aubrey Modiba - 2+[line=]', 'Khulumani Ndamane - 2+[line=]', 'Thabang Matuludi - 2+[line=]', 'Khuliso Mudau - 2+[line=]', 'Mbekezeli Mbokazi - 2+[line=]', 'Bradley Cross - 2+[line=]', 'Ime Okon - 2+[line=]', 'Nkosinathi Sibisi - 2+[line=]', 'Olwethu Makhanya - 2+[line=]', 'Lyle Foster - 3+[line=]', 'Evidence Makgopa - 3+[line=]', 'Iqraam Rayners - 3+[line=]', 'Oswin Appollis - 3+[line=]', 'Relebohile Mofokeng - 3+[line=]', 'Teboho Mokoena - 3+[line=]', 'Tshepang Moremi - 3+[line=]', 'Kamogelo Sebelebele - 3+[line=]', 'Themba Zwane - 3+[line=]', 'Jayden Adams - 3+[line=]', 'Thalente Mbatha - 3+[line=]', 'Thapelo Maseko - 3+[line=]', 'Lyle Foster - 4+[line=]', 'Evidence Makgopa - 4+[line=]', 'Iqraam Rayners - 4+[line=]', 'Oswin Appollis - 4+[line=]', 'Relebohile Mofokeng - 4+[line=]', 'Teboho Mokoena - 4+[line=]', 'Tshepang Moremi - 4+[line=]', 'Kamogelo Sebelebele - 4+[line=]', 'Themba Zwane - 4+[line=]', 'Lyle Foster - 5+[line=]', 'Teboho Mokoena - 5+[line=]', 'Oswin Appollis - 5+[line=]', 'Relebohile Mofokeng - 5+[line=]', 'Sphephelo Sithole - 3+[line=]', 'Thabang Matuludi - 3+[line=]', 'Santiago Gimenez[line=]']
+### Player Shots On Target
+    ['Erik Lira', 'Cesar Huerta - 1+', 'Julian Quinones - 1+', 'Raul Jimenez - 1+', 'Santiago Gimenez - 1+', 'Armando Gonzalez - 1+', 'Guillermo Martinez - 1+', 'Alexis Vega - 1+', 'Brian Gutierrez - 1+', 'Orbelin Pineda - 1+', 'Alvaro Fidalgo - 1+', 'Gilberto Mora - 1+', 'Roberto Alvarado - 1+', 'Jesus Gallardo - 1+', 'Luis Chavez - 1+', 'Obed Vargas - 1+', 'Luis Romo - 1+', 'Cesar Montes - 1+', 'Edson Alvarez - 1+', 'Erik Lira - 1+', 'Israel Reyes - 1+', 'Johan Vasquez - 1+', 'Mateo Chavez - 1+', 'Jorge Sanchez - 1+', 'Cesar Huerta - 2+', 'Julian Quinones - 2+', 'Raul Jimenez - 2+', 'Santiago Gimenez - 2+', 'Armando Gonzalez - 2+', 'Guillermo Martinez - 2+', 'Alexis Vega - 2+', 'Brian Gutierrez - 2+', 'Orbelin Pineda - 2+', 'Alvaro Fidalgo - 2+', 'Gilberto Mora - 2+', 'Roberto Alvarado - 2+', 'Jesus Gallardo - 2+', 'Luis Chavez - 2+', 'Obed Vargas - 2+', 'Luis Romo - 2+', 'Cesar Montes - 2+', 'Edson Alvarez - 2+', 'Erik Lira - 2+', 'Israel Reyes - 2+', 'Johan Vasquez - 2+', 'Mateo Chavez - 2+', 'Cesar Huerta - 3+', 'Julian Quinones - 3+', 'Raul Jimenez - 3+', 'Santiago Gimenez - 3+', 'Armando Gonzalez - 3+', 'Guillermo Martinez - 3+', 'Alexis Vega - 3+', 'Brian Gutierrez - 3+', 'Orbelin Pineda - 3+', 'Alvaro Fidalgo - 3+', 'Gilberto Mora - 3+', 'Roberto Alvarado - 3+', 'Jesus Gallardo - 3+', 'Luis Chavez - 3+', 'Cesar Huerta - 4+', 'Julian Quinones - 4+', 'Raul Jimenez - 4+', 'Santiago Gimenez - 4+', 'Armando Gonzalez - 4+', 'Guillermo Martinez - 4+', 'Alexis Vega - 4+', 'Lyle Foster - 1+', 'Evidence Makgopa - 1+', 'Iqraam Rayners - 1+', 'Oswin Appollis - 1+', 'Relebohile Mofokeng - 1+', 'Teboho Mokoena - 1+', 'Tshepang Moremi - 1+', 'Kamogelo Sebelebele - 1+', 'Themba Zwane - 1+', 'Jayden Adams - 1+', 'Thalente Mbatha - 1+', 'Thapelo Maseko - 1+', 'Samukelo Kabini - 1+', 'Sphephelo Sithole - 1+', 'Aubrey Modiba - 1+', 'Khulumani Ndamane - 1+', 'Thabang Matuludi - 1+', 'Khuliso Mudau - 1+', 'Mbekezeli Mbokazi - 1+', 'Bradley Cross - 1+', 'Ime Okon - 1+', 'Nkosinathi Sibisi - 1+', 'Olwethu Makhanya - 1+', 'Lyle Foster - 2+', 'Evidence Makgopa - 2+', 'Iqraam Rayners - 2+', 'Oswin Appollis - 2+', 'Relebohile Mofokeng - 2+', 'Teboho Mokoena - 2+', 'Tshepang Moremi - 2+', 'Kamogelo Sebelebele - 2+', 'Themba Zwane - 2+', 'Jayden Adams - 2+', 'Thalente Mbatha - 2+', 'Thapelo Maseko - 2+', 'Lyle Foster - 3+']
+### Player Shots on Targets
+    ['matheus cunha/over 1+', 'matheus cunha/over 2+', 'matheus cunha/over 3+', 'bryan mbeumo/over 1+', 'bryan mbeumo/over 2+', 'bryan mbeumo/over 3+', 'benjamin sesko/over 1+', 'benjamin sesko/over 2+', 'benjamin sesko/over 3+', 'sorba thomas/over 1+', 'sorba thomas/over 2+', 'sorba thomas/over 3+', 'bruno fernandes/over 1+', 'bruno fernandes/over 2+', 'bruno fernandes/over 3+', 'casemiro/over 1+', 'casemiro/over 2+', 'casemiro/over 3+', 'chinonso chibueze/over 1+', 'chinonso chibueze/over 2+', 'chinonso chibueze/over 3+', 'sam gallagher/over 1+', 'sam gallagher/over 2+', 'sam gallagher/over 3+', 'jesurun rak-sakyi/over 1+', 'jesurun rak-sakyi/over 2+', 'jesurun rak-sakyi/over 3+', 'amad diallo/over 1+', 'amad diallo/over 2+', 'amad diallo/over 3+', 'kobbie mainoo/over 1+', 'kobbie mainoo/over 2+', 'steven nzonzi/over 1+', 'steven nzonzi/over 2+', 'ben pearson/over 1+', 'ben pearson/over 2+', 'diogo dalot/over 1+', 'harry maguire/over 1+', 'ashley phillips/over 1+', 'maksym talovierov/over 1+', 'aaron cresswell/over 1+', 'junior tchamadeu/over 1+', 'luke shaw/over 1+', 'joshua zirkzee/over 1+', 'joshua zirkzee/over 2+', 'joshua zirkzee/over 3+', 'joshua zirkzee/over 4+']
+### Player Tackles
+    ['Cesar Huerta - 1+', 'Julian Quinones - 1+', 'Raul Jimenez - 1+', 'Santiago Gimenez - 1+', 'Armando Gonzalez - 1+', 'Guillermo Martinez - 1+', 'Alexis Vega - 1+', 'Brian Gutierrez - 1+', 'Orbelin Pineda - 1+', 'Alvaro Fidalgo - 1+', 'Gilberto Mora - 1+', 'Roberto Alvarado - 1+', 'Jesus Gallardo - 1+', 'Luis Chavez - 1+', 'Obed Vargas - 1+', 'Luis Romo - 1+', 'Cesar Montes - 1+', 'Edson Alvarez - 1+', 'Erik Lira - 1+', 'Israel Reyes - 1+', 'Johan Vasquez - 1+', 'Jorge Sanchez - 1+', 'Cesar Huerta - 2+', 'Julian Quinones - 2+', 'Raul Jimenez - 2+', 'Santiago Gimenez - 2+', 'Armando Gonzalez - 2+', 'Guillermo Martinez - 2+', 'Alexis Vega - 2+', 'Brian Gutierrez - 2+', 'Orbelin Pineda - 2+', 'Alvaro Fidalgo - 2+', 'Gilberto Mora - 2+', 'Roberto Alvarado - 2+', 'Jesus Gallardo - 2+', 'Luis Chavez - 2+', 'Obed Vargas - 2+', 'Luis Romo - 2+', 'Cesar Montes - 2+', 'Edson Alvarez - 2+', 'Erik Lira - 2+', 'Israel Reyes - 2+', 'Johan Vasquez - 2+', 'Mateo Chavez - 2+', 'Jorge Sanchez - 2+', 'Cesar Huerta - 3+', 'Julian Quinones - 3+', 'Raul Jimenez - 3+', 'Armando Gonzalez - 3+', 'Alexis Vega - 3+', 'Brian Gutierrez - 3+', 'Orbelin Pineda - 3+', 'Alvaro Fidalgo - 3+', 'Gilberto Mora - 3+', 'Roberto Alvarado - 3+', 'Jesus Gallardo - 3+', 'Luis Chavez - 3+', 'Obed Vargas - 3+', 'Luis Romo - 3+', 'Cesar Montes - 3+', 'Edson Alvarez - 3+', 'Erik Lira - 3+', 'Israel Reyes - 3+', 'Johan Vasquez - 3+', 'Mateo Chavez - 3+', 'Jorge Sanchez - 3+', 'Cesar Huerta - 4+', 'Raul Jimenez - 4+', 'Alexis Vega - 4+', 'Brian Gutierrez - 4+', 'Orbelin Pineda - 4+', 'Alvaro Fidalgo - 4+', 'Gilberto Mora - 4+', 'Jesus Gallardo - 4+', 'Luis Chavez - 4+', 'Obed Vargas - 4+', 'Luis Romo - 4+', 'Edson Alvarez - 4+', 'Erik Lira - 4+', 'Israel Reyes - 4+', 'Johan Vasquez - 4+', 'Alexis Vega - 5+', 'Brian Gutierrez - 5+', 'Gilberto Mora - 5+', 'Jesus Gallardo - 5+', 'Luis Chavez - 5+', 'Luis Romo - 5+', 'Lyle Foster - 1+', 'Evidence Makgopa - 1+', 'Iqraam Rayners - 1+', 'Oswin Appollis - 1+', 'Relebohile Mofokeng - 1+', 'Teboho Mokoena - 1+', 'Tshepang Moremi - 1+', 'Kamogelo Sebelebele - 1+', 'Themba Zwane - 1+', 'Jayden Adams - 1+', 'Thalente Mbatha - 1+', 'Thapelo Maseko - 1+', 'Samukelo Kabini - 1+', 'Sphephelo Sithole - 1+', 'Aubrey Modiba - 1+', 'Khulumani Ndamane - 1+', 'Thabang Matuludi - 1+', 'Khuliso Mudau - 1+', 'Mbekezeli Mbokazi - 1+', 'Bradley Cross - 1+', 'Ime Okon - 1+', 'Nkosinathi Sibisi - 1+', 'Olwethu Makhanya - 1+', 'Lyle Foster - 2+', 'Evidence Makgopa - 2+', 'Iqraam Rayners - 2+', 'Oswin Appollis - 2+', 'Relebohile Mofokeng - 2+', 'Teboho Mokoena - 2+', 'Tshepang Moremi - 2+', 'Kamogelo Sebelebele - 2+', 'Themba Zwane - 2+', 'Jayden Adams - 2+', 'Thalente Mbatha - 2+', 'Thapelo Maseko - 2+', 'Samukelo Kabini - 2+', 'Sphephelo Sithole - 2+', 'Aubrey Modiba - 2+', 'Khulumani Ndamane - 2+', 'Thabang Matuludi - 2+', 'Khuliso Mudau - 2+', 'Mbekezeli Mbokazi - 2+', 'Bradley Cross - 2+', 'Ime Okon - 2+', 'Nkosinathi Sibisi - 2+', 'Olwethu Makhanya - 2+', 'Lyle Foster - 3+', 'Evidence Makgopa - 3+', 'Iqraam Rayners - 3+', 'Oswin Appollis - 3+', 'Relebohile Mofokeng - 3+', 'Teboho Mokoena - 3+', 'Tshepang Moremi - 3+', 'Kamogelo Sebelebele - 3+', 'Themba Zwane - 3+', 'Jayden Adams - 3+', 'Thalente Mbatha - 3+', 'Thapelo Maseko - 3+', 'Evidence Makgopa - 4+', 'Oswin Appollis - 4+', 'Relebohile Mofokeng - 4+', 'Teboho Mokoena - 4+', 'Tshepang Moremi - 4+', 'Kamogelo Sebelebele - 4+', 'Themba Zwane - 4+', 'Sphephelo Sithole - 3+', 'Bradley Cross - 3+', 'Samukelo Kabini - 3+', 'Aubrey Modiba - 3+', 'Khuliso Mudau - 3+', 'Thabang Matuludi - 3+', 'Khulumani Ndamane - 3+', 'Ime Okon - 3+', 'Olwethu Makhanya - 3+', 'Mbekezeli Mbokazi - 3+', 'Nkosinathi Sibisi - 3+', 'Mateo Chavez - 4+', 'Bradley Cross - 4+', 'Jayden Adams - 4+', 'Sphephelo Sithole - 4+', 'Thapelo Maseko - 4+', 'Jorge Sanchez - 4+', 'Samukelo Kabini - 4+', 'Aubrey Modiba - 4+', 'Khuliso Mudau - 4+', 'Thabang Matuludi - 4+', 'Khulumani Ndamane - 4+', 'Olwethu Makhanya - 4+', 'Thalente Mbatha - 4+', 'Mateo Chavez - 5+', 'Bradley Cross - 5+', 'Jayden Adams - 5+', 'Sphephelo Sithole - 5+', 'Edson Alvarez - 5+', 'Jorge Sanchez - 5+', 'Mateo Chavez - 6+', 'Mbekezeli Mbokazi - 4+', 'Nkosinathi Sibisi - 4+', 'Aubrey Modiba - 5+', 'Khuliso Mudau - 5+', 'Mbekezeli Mbokazi - 5+', 'Samukelo Kabini - 5+', 'Olwethu Makhanya - 5+', 'Aubrey Modiba - 6+', 'Erik Lira - 5+', 'Mateo Chavez - 7+']
+### Player to be Booked
+    ['ben pearson', 'junior tchamadeu', 'ashley phillips', 'sam gallagher', 'maksym talovierov', 'sorba thomas', 'steven nzonzi', 'chinonso chibueze', 'casemiro', 'aaron cresswell', 'luke shaw', 'jesurun rak-sakyi', 'viktor johansson', 'bruno fernandes', 'matheus cunha', 'kobbie mainoo', 'harry maguire', 'diogo dalot', 'benjamin sesko', 'bryan mbeumo', 'senne lammens', 'amad diallo', 'joshua zirkzee']
+### Player to be Sent Off
+    ['ben pearson', 'maksym talovierov', 'ashley phillips', 'sam gallagher', 'sorba thomas', 'chinonso chibueze', 'steven nzonzi', 'junior tchamadeu', 'aaron cresswell', 'casemiro', 'luke shaw', 'jesurun rak-sakyi', 'bruno fernandes', 'diogo dalot', 'matheus cunha', 'kobbie mainoo', 'viktor johansson', 'harry maguire', 'benjamin sesko', 'bryan mbeumo', 'senne lammens', 'amad diallo', 'joshua zirkzee']
+### Race to the 3rd corner?
+    ['home', 'away', 'neither']
+### Race to the 5th corner?
+    ['home', 'away', 'neither']
+### Race to the 7th corner?
+    ['home', 'away', 'neither']
+### Race to the 9th corner?
+    ['home', 'away', 'neither']
+### Result / Both Teams To Score
+    ['1/yes', '2/yes', 'x/yes', '1/no', '2/no', 'x/no']
+### Result/Total Goals
+    ['Home/Over[line=2.5]', 'Draw/Over[line=2.5]', 'Away/Over[line=2.5]', 'Home/Under[line=2.5]', 'Draw/Under[line=2.5]', 'Away/Under[line=2.5]']
+### Result/Total Goals (1st Half)
+    ['Draw/Over[line=1.5]', 'Away/Over[line=1.5]', 'Home/Over[line=1.5]', 'Home/Under[line=1.5]', 'Draw/Under[line=1.5]', 'Away/Under[line=1.5]']
+### Results/Both Teams To Score
+    ['Home/Yes', 'Draw/Yes', 'Away/Yes', 'Home/No', 'Draw/No', 'Away/No']
+### ShotOnTarget 1x2
+    ['Home', 'Draw', 'Away']
+### Shots. Away Total
+    ['Over[line=8.5]', 'Under[line=8.5]', 'Over[line=7.5]', 'Under[line=7.5]']
+### Shots.1x2
+    ['Home', 'Draw', 'Away']
+### Team To Score First
+    ['Home', 'Draw', 'Away']
+### Team To Score Last
+    ['Home', 'Draw', 'Away']
+### To Miss A Penalty
+    ['Home', 'Away']
+### To Qualify
+    ['Home', 'Away']
+### To Score 2 or More
+    ['karl holmberg', 'antonio yakoub', 'suwaibou kebbeh', 'ahmed yasin', 'jeremiah bjornler', 'taiki kagayama', 'victor sandberg', 'jacob ortmark', 'manasse kusu', 'samuel wikman', 'hugo aviander', 'giuseppe bovalina', 'marc manchon', 'john stenberg', 'nils eriksson', 'alex pantelidis', 'christopher redenstrand', 'lucas forsberg', 'joshua mambu', 'malte hallin']
+### To Score 3 or More
+    ['karl holmberg', 'antonio yakoub', 'suwaibou kebbeh', 'ahmed yasin', 'jeremiah bjornler', 'taiki kagayama', 'victor sandberg', 'jacob ortmark', 'manasse kusu', 'samuel wikman', 'hugo aviander', 'giuseppe bovalina', 'marc manchon', 'john stenberg', 'nils eriksson', 'alex pantelidis', 'christopher redenstrand', 'lucas forsberg', 'joshua mambu', 'malte hallin']
+### To Score A Penalty
+    ['Home', 'Away']
+### To Score In Both Halves By Teams
+    ['Home', 'Away']
+### To Win 2nd Half
+    ['home', 'draw', 'away']
+### To Win Either Half
+    ['Home', 'Away']
+### To Win From Behind
+    ['Home', 'Away']
+### Total - Away
+    ['Over[line=1.5]', 'Under[line=1.5]', 'Over[line=2.5]', 'Under[line=2.5]', 'Over[line=0.5]', 'Under[line=0.5]']
+### Total - Home
+    ['Over[line=1.5]', 'Under[line=1.5]', 'Over[line=2.5]', 'Under[line=2.5]', 'Over[line=3.5]', 'Under[line=3.5]', 'Over[line=0.5]', 'Under[line=0.5]', 'Over[line=4.5]', 'Under[line=4.5]', 'Over[line=5.5]', 'Under[line=5.5]']
+### Total Cards
+    ['Over[handicap=2.5]', 'Under[handicap=2.5]']
+### Total Corners
+    ['Over[handicap=8.5]', 'Under[handicap=8.5]']
+### Total Corners (1st Half)
+    ['Over[line=4]', 'Under[line=4]']
+### Total Corners (3 way)
+    ['Exactly[line=4]', 'Over[line=4]', 'Under[line=4]', 'Exactly[line=5]', 'Over[line=5]', 'Under[line=5]', 'Exactly[line=8]', 'Over[line=8]', 'Under[line=8]', 'Exactly[line=9]', 'Over[line=9]', 'Under[line=9]', 'Exactly[line=10]', 'Over[line=10]', 'Under[line=10]', 'Exactly[line=11]', 'Over[line=11]', 'Under[line=11]', 'Exactly[line=7]', 'Over[line=7]', 'Under[line=7]', 'Exactly[line=12]', 'Over[line=12]', 'Under[line=12]', 'Exactly[line=6]', 'Over[line=6]', 'Under[line=6]', 'Exactly[line=13]', 'Over[line=13]', 'Under[line=13]', 'Exactly[line=14]', 'Over[line=14]', 'Under[line=14]', 'Exactly[line=15]', 'Over[line=15]', 'Under[line=15]']
+### Total Corners (3 way) (1st Half)
+    ['over', 'exactly', 'under']
+### Total Corners (3way) (2nd Half)
+    ['over', 'exactly', 'under']
+### Total Goals/Both Teams To Score
+    ['o/yes[line=2.5]', 'o/no[line=2.5]', 'u/yes[line=2.5]', 'u/no[line=2.5]']
+### Total ShotOnGoal
+    ['Over[line=7.5]', 'Under[line=7.5]']
+### Total Shots
+    ['Over[handicap=20.5]', 'Under[handicap=20.5]']
+### Total Tackles
+    ['Over[line=30.5]', 'Under[line=30.5]', 'Over[line=31.5]', 'Under[line=31.5]', 'Over[line=32.5]', 'Under[line=32.5]']
+### Total shots on goal
+    ['Over[handicap=8.5]', 'Under[handicap=8.5]']
+### Which team will score the 10th corner? (2 Way)
+    ['home', 'away']
+### Which team will score the 1st goal?
+    ['home', 'draw', 'away']
+### Which team will score the 2nd corner? (2 Way)
+    ['home', 'away']
+### Which team will score the 2nd goal?
+    ['home', 'draw', 'away']
+### Which team will score the 3rd corner? (2 Way)
+    ['home', 'away']
+### Which team will score the 3rd goal?
+    ['home', 'draw', 'away']
+### Which team will score the 4th corner? (2 Way)
+    ['home', 'away']
+### Which team will score the 4th goal?
+    ['home', 'draw', 'away']
+### Which team will score the 5th corner? (2 Way)
+    ['home', 'away']
+### Which team will score the 5th goal?
+    ['home', 'draw', 'away']
+### Which team will score the 6th corner? (2 Way)
+    ['home', 'away']
+### Which team will score the 6th goal?
+    ['home', 'draw', 'away']
+### Which team will score the 7th corner? (2 Way)
+    ['home', 'away']
+### Which team will score the 7th goal?
+    ['home', 'draw', 'away']
+### Which team will score the 8th corner? (2 Way)
+    ['home', 'away']
+### Which team will score the 9th corner? (2 Way)
+    ['home', 'away']
+### Win Both Halves
+    ['Home', 'Away']
+### Win To Nil
+    ['Home', 'Away']
+### Winning Margin
+    ['1 by 1', '2 by 1', '1 by 4+', '1 by 2', '2 by 2', '1 by 3', '2 by 3', '2 by 4+', 'Score Draw', 'Draw']
+TOTAL DISTINCT MARKETS: 206

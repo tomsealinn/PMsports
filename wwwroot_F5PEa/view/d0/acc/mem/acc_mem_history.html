@@ -1,0 +1,630 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<script>{JS}</script>
+<style>{CSS}</style>
+
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title></title>
+</head>
+<body>
+		<div>
+			<!-- wager资料 -->
+			<!-- 输赢字体粗细颜色 蓝色class="word_blue" 红色class="word_red" 绿色class="word_green"
+			橘色class="word_orange" 粗体class="word_bold" 删除线class="word_del"-->
+			<div class="mem_detailG">
+				<!-- START DYNAMIC BLOCK: USER -->
+				<!-- head固定 -->
+				<!-- 当卷轴滚动时在class="mem_detail_head"后方加上clas="title_fixed" -->
+				<div class="mem_detail_head">
+					<h1>
+						<span id="back_btn" name="back_btn" class="re_detailclose_btn">
+						</span>
+						<!-- 客户名称 -->
+						<div class="re_detail_title">
+							<div id="username">
+							</div>
+							<span id="alias">
+							</span>
+						</div>
+						<!-- 客户名称end -->
+					</h1>
+					<!-- 选项按钮 -->
+					<ul class="re_titleG equal">
+						<li id="today_wagers" class="on">
+							交易状况
+						</li>
+						<li id="history">
+							帐户历史
+						</li>
+					</ul>
+					<!-- 选项按钮end -->
+				</div>
+				<!-- head固定end -->
+				<!-- info -->
+				<div name="prev_scroll_lock" class="re_detail_scroll">
+					<!-- 球类选择 -->
+					<!-- 内容需展开时 请在原有class后面加上class="active" -->
+					<div id="control_bar" class="re_sreachterm_allG noborder">
+						<!-- 返回键 -->
+						<input id="back_click" type="button" class="mem_detail_backbtn">
+						<!-- 返回键end -->
+						<!-- 球类 -->
+						<div id="gtype_div">
+							<div id="gtype_sel_LB" data-sreachitem="球类" class="re_sreachitem hide_on_mini_only hide_on_small_only hide_on_med_only">
+								<div class="re_sreachitem_title">
+									<span id="sel_text">
+										所有球类
+									</span>
+								</div>
+								<ul id="sel_list" class="use_animate">
+								</ul>
+							</div>
+							<label for="gtype_sel" data-sreachitem="活动类別" class="re_sreachitem_select hide_on_large_only">
+								<select id="gtype_sel">
+									<option value="ALL">
+										所有球类
+									</option>
+									<option value="FT">
+										足球
+									</option>
+									<option value="BK">
+										篮球 / 美式足球
+									</option>
+									<option value="TN">
+										网球
+									</option>
+									<option value="VB">
+										排球
+									</option>
+									<option value="BS">
+										棒球
+									</option>
+									<option value="OP">
+										其它球类
+									</option>
+									<option value="FS">
+										冠军
+									</option>
+									<option value="BM">
+										羽毛球
+									</option>
+									<option value="TT">
+										乒乓球
+									</option>
+									<option value="SK">
+										斯诺克 / 台球
+									</option>
+								</select>
+								<i>
+								</i>
+							</label>
+						</div>
+						<!-- 球类end -->
+						<!-- 日期 -->
+						<div id="date_div">
+							<div id="date_sel_LB" data-sreachitem="日期" class="re_sreachitem hide_on_mini_only hide_on_small_only hide_on_med_only">
+								<div class="re_sreachitem_title">
+									<span id="sel_text">
+										所有
+									</span>
+								</div>
+								<ul id="sel_list" class="use_animate">
+								</ul>
+							</div>
+							<label for="date_sel" data-sreachitem="日期" class="re_sreachitem_select hide_on_large_only">
+								<select id="date_sel">
+								</select>
+								<i>
+								</i>
+							</label>
+						</div>
+						<!-- 日期end -->
+					</div>
+					<!-- 球类选择end -->
+					<!-- OPEN BETS -->
+					<div id="today_wagers_show" class="mem_detail_openbets" style="display: none;">
+						<div class="mem_detail_dataG">
+							<h2>
+								<span class="word_nomal">
+									总投注额
+								</span>
+								<span id="unsettle_amout_gold">
+									0
+								</span>
+							</h2>
+							<div id="today_wagers_content">
+							</div>
+						</div>
+					</div>
+					<div id="today_wagers_model" class="mem_detail_openbets" style="display: none;">
+						<xmp>
+							<!-- 一般start -->
+							<!-- START DYNAMIC BLOCK: wagers -->
+							<div id="div_*TID*" class="mem_detail_dataBox">
+								<ul class="re_betDetailUL">
+									<li class="re_betdetail_liTime">
+										<span>
+											*DATE* *ADDTIME*
+										</span>
+										<span>
+											*ODDF_TYPE* *WID*
+										</span>
+									</li>
+									<li>
+										*LEAGUE*
+									</li>
+									<li>
+										*TEAM_H* *IS_FS* *TEAM_C*
+										<tt class="word_green">
+											*ORG_SCORE*
+										</tt>
+										<tt class="word_blue">
+											*SCORE*
+										</tt>
+									</li>
+									<li class="re_betdetail_liBold">
+										*RESULT*
+										<tt class="word_red">
+											*BET_RATIO*
+										</tt>
+										@
+										<tt class="word_red">
+											*IORATIO*
+										</tt>
+									</li>
+									<li class="re_betdetail_liMini">
+										*GTYPE* *WTYPE* *W_MS*
+									</li>
+									<li class="re_detailbig_result">
+										<span>
+											投注额:
+											<tt class="*GOLD_CLASS*">
+												*GOLD*
+											</tt>
+										</span>
+										<span style="*WIN_GOLD_DIS*" class="txtr">
+											可赢金额:
+											<tt class="word_bold">
+												*WIN_GOLD*
+											</tt>
+										</span>
+									</li>
+									<li>
+										<span id="dg_*TID*" class="*BALL_ACT_CLASS*">
+											*BALL_ACT_RET*
+										</span>
+									</li>
+								</ul>
+							</div>
+							<!-- END DYNAMIC BLOCK: wagers -->
+							<!-- 一般end -->
+						</xmp>
+					</div>
+					<div id="today_wagers_P_model" class="mem_detail_openbets" style="display: none;">
+						<xmp>
+							<!-- 过关串 -->
+							<!-- START DYNAMIC BLOCK: title -->
+							<div id="div_*TID*" class="mem_detail_dataBox">
+								<ul class="re_betDetailUL">
+									<li class="re_betdetail_liTime">
+										<span>
+											*DATE* *ADDTIME*
+										</span>
+										<span>
+											*WID*
+										</span>
+									</li>
+									<li class="re_betdetail_liParlay">
+										*GTYPE* 综合过关
+									</li>
+									<!-- END DYNAMIC BLOCK: title -->
+									<!-- START DYNAMIC BLOCK: wagers -->
+									<li>
+										<ul class="re_detail_line">
+											<li class="*DEL_CLASS*">
+												*LEAGUE*
+											</li>
+											<li class="*DEL_CLASS*">
+												*TEAM_H* v *TEAM_C*
+												<tt class="word_green">
+													*ORG_SCORE*
+												</tt>
+												<tt class="word_blue">
+													*SCORE*
+												</tt>
+											</li>
+											<li class="re_betdetail_liBold *DEL_CLASS*">
+												*RESULT*
+												<tt class="word_red">
+													*BET_RATIO*
+												</tt>
+												@
+												<tt class="word_red">
+													*IORATIO*
+												</tt>
+											</li>
+											<li class="re_betdetail_liMini *DEL_CLASS*">
+												*WTYPE_SUB* *MS_SUB*
+											</li>
+											<li class="re_betdetail_liMini *DEL_CLASS*">
+												*DATE*
+											</li>
+										</ul>
+									</li>
+									<!-- END DYNAMIC BLOCK: wagers -->
+									<!-- START DYNAMIC BLOCK: gold -->
+									<li class="re_detailbig_result re_detail_topline">
+										<span>
+											投注额:
+											<tt class="*GOLD_CLASS*">
+												*GOLD*
+											</tt>
+										</span>
+										<span style="*WIN_GOLD_DIS*" class="txtr">
+											可赢金额:
+											<tt class="word_bold">
+												*WIN_GOLD*
+											</tt>
+										</span>
+									</li>
+									<li>
+										<tt class="*BALL_ACT_CLASS*">
+											*BALL_ACT_RET*
+										</tt>
+									</li>
+									<!-- END DYNAMIC BLOCK: gold -->
+								</ul>
+							</div>
+							<!-- 过关串end -->
+						</xmp>
+					</div>
+					<!-- OPEN BETS end -->
+					<!-- STATEMENT -->
+					<div id="history_data_show" class="mem_detail_statement" style="display: none;">
+					</div>
+					<div id="history_data_model" class="mem_detail_statement" style="display: none;">
+						<xmp>
+							<!-- 报表固定header -->
+							<div id="re_head_fixed">
+								<!-- id="re_head_fixed"后面加上 class="true_fixed" -->
+								<div id="re_head_scroll" class="re_headauto_fixed">
+									<!-- 没有按到的排序class="re_sort" 大到小加上 class="sort_down" 小到大加上 class="sort_up"
+									-->
+									<div class="re_table_autoW">
+										<table cellpadding="0" cellspacing="0" class="re_table_main">
+											<thead>
+												<!-- 第一行head -->
+												<tr class="re_table_head01G">
+													<td class="re_td_w20 txtl">
+														日期
+													</td>
+													<td class="re_td_w25">
+														投注额
+													</td>
+													<td class="re_td_w25">
+														有效金额
+													</td>
+													<td class="re_td_w30">
+														派彩结果
+													</td>
+												</tr>
+												<!-- 第一行head -->
+												<!-- START DYNAMIC BLOCK: total -->
+												<tr class="re_table_head02G">
+													<td class="txtl word_nomal">
+														总计
+													</td>
+													<td>
+														<tt class="*GOLD_CLASS*">
+															*GOLD*
+														</tt>
+													</td>
+													<td>
+														*VGOLD*
+													</td>
+													<td class="*WINLOSS_CLS*">
+														*WINLOSS*
+													</td>
+													<!--word_paleGreen-->
+												</tr>
+												<!-- END DYNAMIC BLOCK: total -->
+											</thead>
+										</table>
+									</div>
+								</div>
+							</div>
+							<!-- 报表固定header end -->
+							<!-- 报表资料生成model -->
+							<div class="re_body_scroll" id="re_body_scroll">
+								<div class="re_table_autoW ">
+									<table cellpadding="0" cellspacing="0" class="re_table_main">
+										<tbody>
+											<!-- START DYNAMIC BLOCK: history -->
+											<tr name="date_btn" date="*DATE*" gold="*GOLD*" class="re_table_body">
+												<td class="re_td_w20 txtl">
+													*DATE_NAME*
+													<br>
+													*WEEK*
+												</td>
+												<td class="re_td_w25">
+													<tt class="*GOLD_CLASS*">
+														*GOLD*
+													</tt>
+												</td>
+												<td class="re_td_w25">
+													*VGOLD*
+												</td>
+												<td class="re_td_w30 *WINLOSS_CLS*">
+													*WINLOSS*
+												</td>
+												<!--word_paleGreen-->
+											</tr>
+											<!-- END DYNAMIC BLOCK: history -->
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</xmp>
+						<!-- 报表资料生成model end -->
+					</div>
+					<div id="sel_date_model" class="mem_detail_statement" style="display: none;">
+						<xmp>
+							<!-- START DYNAMIC BLOCK: dates -->
+							<li id="date_*DATE*">
+								*DATE_NAME* *WEEK*
+							</li>
+							<!-- END DYNAMIC BLOCK: dates -->
+						</xmp>
+					</div>
+					<div id="history_view_show" class="mem_detail_openbets" style="display: none;">
+						<div class="mem_detail_dataG">
+							<h2>
+								<span class="word_nomal">
+									总计
+								</span>
+								<span id="settle_amount_gold">
+									0
+								</span>
+								<span id="settle_amount_wingold">
+									0
+								</span>
+							</h2>
+							<div id="history_view_content">
+							</div>
+						</div>
+					</div>
+					<div id="history_view_model" class="mem_detail_openbets" style="display: none;">
+						<xmp>
+							<!-- 一般start -->
+							<!-- START DYNAMIC BLOCK: wagers -->
+							<div id="div_*TID*" class="mem_detail_dataBox">
+								<ul class="re_betDetailUL">
+									<li class="re_betdetail_liTime">
+										<span>
+											*DATE* *ADDTIME*
+										</span>
+										<span>
+											*ODDF_TYPE* *WID*
+										</span>
+									</li>
+									<li>
+										*LEAGUE*
+									</li>
+									<li>
+										*TEAM_H* *IS_FS* *TEAM_C*
+										<tt class="word_green">
+											*ORG_SCORE*
+										</tt>
+										<tt class="word_blue">
+											*SCORE*
+										</tt>
+									</li>
+									<li class="re_betdetail_liBold">
+										*RESULT*
+										<tt class="word_red">
+											*BET_RATIO*
+										</tt>
+										@
+										<tt class="word_red">
+											*IORATIO*
+										</tt>
+									</li>
+									<li class="re_betdetail_liMini">
+										*GTYPE* *WTYPE* *MS*
+									</li>
+									<li>
+										<span class="*RESULT_WL_CLASS*">
+											*RESULT_WL*
+										</span>
+									</li>
+									<li class="re_detailbig_result">
+										<span>
+											投注额:
+											<tt class="*GOLD_CLASS*">
+												*GOLD*
+											</tt>
+										</span>
+										<span class="txtr">
+											派彩结果:
+											<tt class="*WIN_GOLD_CLASS*">
+												*WIN_GOLD*
+											</tt>
+										</span>
+									</li>
+									<li>
+										<span id="dg_*TID*" class="*BALL_ACT_CLASS*">
+											*BALL_ACT_RET*
+										</span>
+									</li>
+								</ul>
+							</div>
+							<!-- END DYNAMIC BLOCK: wagers -->
+							<!-- 一般end -->
+						</xmp>
+					</div>
+					<div id="history_view_P_model" class="mem_detail_openbets" style="display: none;">
+						<xmp>
+							<!-- 过关串 -->
+							<!-- START DYNAMIC BLOCK: title -->
+							<div id="div_*TID*" class="mem_detail_dataBox">
+								<ul class="re_betDetailUL">
+									<li class="re_betdetail_liTime">
+										<span>
+											*DATE* *ADDTIME*
+										</span>
+										<span>
+											*WID*
+										</span>
+									</li>
+									<li class="re_betdetail_liParlay">
+										*GTYPE* 综合过关
+									</li>
+									<!-- END DYNAMIC BLOCK: title -->
+									<!-- START DYNAMIC BLOCK: wagers -->
+									<li>
+										<ul class="re_detail_line">
+											<li class="*DEL_CLASS*">
+												*LEAGUE*
+											</li>
+											<li class="*DEL_CLASS*">
+												*TEAM_H* v *TEAM_C*
+												<tt class="word_green">
+													*ORG_SCORE*
+												</tt>
+												<tt class="word_blue">
+													*SCORE*
+												</tt>
+											</li>
+											<li class="re_betdetail_liBold *DEL_CLASS*">
+												*RESULT*
+												<tt class="word_red">
+													*BET_RATIO*
+												</tt>
+												@
+												<tt class="word_red">
+													*IORATIO*
+												</tt>
+											</li>
+											<li class="re_betdetail_liMini *DEL_CLASS*">
+												*WTYPE_SUB* *MS_SUB*
+											</li>
+											<li>
+												<span class="*RESULT_WL_CLASS*">
+													*RESULT_WL*
+													<tt class="*BALL_ACT_CLASS*">
+														*BALL_ACT_RET*
+													</tt>
+												</span>
+											</li>
+										</ul>
+									</li>
+									<!-- END DYNAMIC BLOCK: wagers -->
+									<!-- START DYNAMIC BLOCK: gold -->
+									<li class="re_detailbig_result re_detail_topline">
+										<span>
+											投注额:
+											<tt class="*GOLD_CLASS*">
+												*GOLD*
+											</tt>
+										</span>
+										<span class="txtr">
+											派彩结果:
+											<tt class="*WIN_GOLD_CLASS*">
+												*WIN_GOLD*
+											</tt>
+										</span>
+									</li>
+									<li class="*MAIN_BALL_ACT_CLASS*">
+										*MAIN_BALL_ACT_RET*
+									</li>
+									<!-- END DYNAMIC BLOCK: gold -->
+								</ul>
+							</div>
+							<!-- 过关串end -->
+						</xmp>
+					</div>
+					<!-- STATEMENT end -->
+					<!-- 未有资料No data found -->
+					<div id="nodata_show" style="display:none;" class="data_noneG">
+						无资料
+					</div>
+					<div id="close_div" style="display:none;" class="data_noneG">
+					</div>
+					<!-- 未有资料end -->
+				</div>
+				<!-- info end -->
+				<!-- lazy loading -->
+				<div id="lazy_loading" style="display:none;" class="inside_lds_main">
+					<div class="lds_spinner">
+						<div>
+						</div>
+						<div>
+						</div>
+						<div>
+						</div>
+						<div>
+						</div>
+						<div>
+						</div>
+						<div>
+						</div>
+						<div>
+						</div>
+						<div>
+						</div>
+						<div>
+						</div>
+						<div>
+						</div>
+						<div>
+						</div>
+						<div>
+						</div>
+					</div>
+				</div>
+				<!-- lazy loading end -->
+				<!-- loading -->
+				<div id="history_loading" class="acc_loading" style="display:none">
+					<div class="lds_main">
+						<div class="lds_all">
+							<div class="lds_spinner">
+								<div>
+								</div>
+								<div>
+								</div>
+								<div>
+								</div>
+								<div>
+								</div>
+								<div>
+								</div>
+								<div>
+								</div>
+								<div>
+								</div>
+								<div>
+								</div>
+								<div>
+								</div>
+								<div>
+								</div>
+								<div>
+								</div>
+								<div>
+								</div>
+							</div>
+							<div class="lds_txt">
+								加载中
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- loading end -->
+			</div>
+		</div>
+	</body>
+
+</html>

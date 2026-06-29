@@ -257,7 +257,7 @@ function acc_mem_history(_win, _dom, _post) {
                                 if (w["BET_WTYPE"] == "FS") {
                                     if (keys == "IS_FS") w[keys] = ""
                                 } else {
-                                    if (keys == "IS_FS") w[keys] = "v";
+                                    if (keys == "IS_FS") w[keys] = "对";
                                     if (keys ==
                                         "GTYPE") w[keys] = ""
                                 }
@@ -368,12 +368,12 @@ function acc_mem_history(_win, _dom, _post) {
                             if (w["BET_WTYPE"] == "FS") {
                                 if (keys == "IS_FS") w[keys] = ""
                             } else {
-                                if (keys == "IS_FS") w[keys] = "v";
+                                if (keys == "IS_FS") w[keys] = "对";
                                 if (keys == "GTYPE") w[keys] = ""
                             }
                             if (keys == "IS_FS" && w["BET_WTYPE"] == "FS") w[keys] = "";
                             else if (keys ==
-                                "IS_FS" && w["BET_WTYPE"] != "FS") w[keys] = "v";
+                                "IS_FS" && w["BET_WTYPE"] != "FS") w[keys] = "对";
                             if (w["BALL_ACT_CLASS"] == "word_orange")
                                 if (!util.in_array(tid, danAry)) danAry.push(tid);
                             if (keys == "DATE" && w[keys] != "") {

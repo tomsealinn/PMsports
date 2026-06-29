@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>PM体育 移动端完整UI交互原型</title>
+  <style>
+    :root{
+      --bg:#f4f7fc;
+      --card:#ffffff;
+      --card2:#f7fbff;
+      --text:#101c33;
+      --sub:#667792;
+      --muted:#94a3b8;
+      --line:rgba(30,64,120,.10);
+      --blue:#2f7df6;
+      --blue2:#0f65e8;
+      --blue3:#eaf3ff;
+      --blue4:#dfefff;
+      --green:#16b978;
+      --red:#ee475a;
+      --orange:#ff9f32;
+      --purple:#7267ff;
+      --dark:#0d1b38;
+      --shadow:0 10px 30px rgba(28,80,160,.10);
+      --shadow2:0 18px 46px rgba(28,80,160,.16);
+      --r8:8px;
+      --r10:10px;
+      --r12:12px;
+      --r14:14px;
+      --r18:18px;
+      --safe-bottom:env(safe-area-inset-bottom, 0px);
+      font-synthesis-weight:none;
+      color-scheme:light;
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Microsoft YaHei",Arial,sans-serif;
+      color:var(--text);
+      background:linear-gradient(180deg,#f5f8fd 0%,#eef4fb 100%);
+      overflow:hidden;
+    }
+    button,input{font:inherit;color:inherit}
+    button{border:0;background:transparent;padding:0;cursor:pointer}
+    input{border:0;outline:0;background:transparent}
+    .num,.mono{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1,"ss01" 1;font-family:"SF Mono","Roboto Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .app{
+      position:relative;
+      width:100%;
+      max-width:430px;
+      height:100dvh;
+      min-height:720px;
+      margin:0 auto;
+      overflow:hidden;
+      background:var(--bg);
+      box-shadow:0 0 0 1px rgba(20,40,80,.06),0 28px 80px rgba(14,31,74,.16);
+    }
+    @media (min-width:700px){body{display:grid;place-items:center;background:#dfe8f5}.app{height:844px;border-radius:30px}}
+
+    .status-safe{height:calc(10px + env(safe-area-inset-top, 0px));background:#fff}
+    .topbar{
+      height:56px;
+      padding:0 14px;
+      display:flex;align-items:center;gap:10px;
+      background:rgba(255,255,255,.94);
+      border-bottom:1px solid var(--line);
+      backdrop-filter:blur(18px);
+      position:relative;z-index:20;
+    }
+    .brand{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
+    .brandIcon{
+      width:34px;height:34px;border-radius:10px;
+      display:grid;place-items:center;
+      color:#fff;background:linear-gradient(135deg,#1d74ff,#48a0ff);
+      box-shadow:0 6px 18px rgba(47,125,246,.28);
+      flex:0 0 auto;
+    }
+    .brandIcon svg{width:21px;height:21px;display:block}
+    .brandName{font-size:17px;font-weight:900;letter-spacing:-.03em;white-space:nowrap}
+    .pillStatus{
+      height:28px;display:flex;align-items:center;gap:5px;
+      border-radius:999px;background:#f1f6fd;color:#213a5f;
+      padding:0 10px;font-weight:800;font-size:11px;white-space:nowrap;
+      box-shadow:inset 0 0 0 1px rgba(46,104,200,.05);
+    }
+    .dot{width:7px;height:7px;border-radius:999px;background:var(--green);box-shadow:0 0 0 3px rgba(22,185,120,.12)}
+    .iconBtn{
+      width:34px;height:34px;border-radius:999px;
+      display:grid;place-items:center;background:#f7faff;color:#42526b;
+      box-shadow:inset 0 0 0 1px rgba(40,80,150,.08);
+      flex:0 0 auto;
+    }
+    .iconBtn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .walletBtn{
+      height:34px;display:flex;align-items:center;gap:7px;
+      padding:0 10px 0 7px;border-radius:999px;background:#eef6ff;
+      color:var(--blue);font-size:11px;font-weight:900;min-width:82px;
+      box-shadow:inset 0 0 0 1px rgba(47,125,246,.08);
+    }
+    .avatar{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--blue);color:#fff;font-size:12px;font-weight:900;flex:0 0 auto}
+    .walletText{line-height:1.05;text-align:left}.walletText small{display:block;color:#8394af;font-size:9px;font-weight:800}.walletText b{display:block;white-space:nowrap}
+
+    .mainTabs{
+      height:48px;display:flex;align-items:center;gap:4px;padding:0 10px;background:rgba(255,255,255,.94);
+      border-bottom:1px solid var(--line);position:relative;z-index:19;overflow:auto;scrollbar-width:none;
+    }
+    .mainTabs::-webkit-scrollbar{display:none}
+    .mainTab{
+      height:34px;padding:0 12px;border-radius:999px;display:flex;align-items:center;gap:5px;
+      color:#344760;font-weight:850;font-size:14px;white-space:nowrap;flex:0 0 auto;
+    }
+    .mainTab.active{background:#e9f3ff;color:var(--blue)}
+    .countBadge{min-width:18px;height:18px;border-radius:999px;padding:0 5px;background:#eef2f7;color:#60728d;display:inline-grid;place-items:center;font-size:11px;font-weight:900}
+    .mainTab.active .countBadge{background:#d8eaff;color:var(--blue)}
+
+    .scroll{
+      position:absolute;inset:calc(114px + env(safe-area-inset-top,0px)) 0 0;
+      overflow:auto;scroll-behavior:smooth;padding:10px 12px calc(96px + var(--safe-bottom));
+    }
+    .scroll::-webkit-scrollbar{width:0}
+    .searchRow{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+    .searchBox{
+      flex:1;height:40px;border-radius:999px;background:#fff;padding:0 12px;display:flex;align-items:center;gap:8px;
+      box-shadow:inset 0 0 0 1px var(--line);
+    }
+    .searchBox svg{width:17px;height:17px;stroke:#71839f;fill:none;stroke-width:2;stroke-linecap:round}
+    .searchBox input{width:100%;font-size:13px;color:var(--text)}
+    .filterBtn{
+      height:40px;border-radius:999px;background:#fff;padding:0 13px;display:flex;align-items:center;gap:6px;font-weight:850;font-size:13px;color:var(--blue);
+      box-shadow:inset 0 0 0 1px var(--line);
+    }
+    .filterBtn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+    .quickPanel{
+      background:rgba(255,255,255,.78);border-radius:14px;padding:10px 10px 8px;box-shadow:var(--shadow);border:1px solid rgba(32,84,155,.07);margin-bottom:12px;
+    }
+    .quickTop{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    .quickTitle{font-size:12px;color:#72829a;font-weight:800}.quickSort{font-size:12px;color:var(--blue);font-weight:900;display:flex;gap:3px;align-items:center}
+    .leagueStrip{display:flex;gap:13px;overflow:auto;padding:0 0 2px;scrollbar-width:none}.leagueStrip::-webkit-scrollbar{display:none}
+    .leagueItem{width:52px;flex:0 0 auto;display:grid;justify-items:center;gap:6px;color:#53677f;font-size:11px;font-weight:850}
+    .leagueIcon{width:42px;height:42px;border-radius:13px;background:#f0f6ff;display:grid;place-items:center;color:#12213c;box-shadow:inset 0 0 0 1px rgba(47,125,246,.08)}
+    .leagueIcon svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .leagueItem.active{color:var(--blue)}.leagueItem.active .leagueIcon{background:var(--blue);color:#fff;box-shadow:0 9px 20px rgba(47,125,246,.28)}
+    .leagueItem span{white-space:nowrap;max-width:58px;overflow:hidden;text-overflow:ellipsis}
+
+    .dateChips{display:flex;gap:8px;overflow:auto;margin:2px -12px 12px;padding:0 12px;scrollbar-width:none}.dateChips::-webkit-scrollbar{display:none}
+    .dateChip{height:34px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1px var(--line);color:#495b73;font-weight:850;font-size:13px;padding:0 13px;white-space:nowrap;flex:0 0 auto}.dateChip.active{background:var(--blue);color:#fff;box-shadow:0 8px 18px rgba(47,125,246,.25)}
+
+    .leagueHeader{display:flex;align-items:center;justify-content:space-between;padding:6px 2px 9px;margin-top:3px}
+    .leagueName{display:flex;align-items:center;gap:8px;font-weight:900;font-size:16px;letter-spacing:-.02em}
+    .smallBall{width:25px;height:25px;border-radius:50%;background:#eef5ff;display:grid;place-items:center;color:#15243e;box-shadow:inset 0 0 0 1px rgba(47,125,246,.08)}
+    .smallBall svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .leagueCount{height:25px;border-radius:999px;padding:0 9px;background:#eaf5ff;color:var(--blue);font-weight:900;font-size:12px;display:grid;place-items:center}
+
+    .matchCard{
+      background:#fff;border-radius:14px;border:1px solid rgba(22,52,96,.08);box-shadow:0 8px 24px rgba(14,60,130,.07);padding:10px;margin-bottom:10px;position:relative;overflow:hidden;
+    }
+    .matchTop{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+    .leftMeta{display:flex;align-items:center;gap:6px;min-width:0}
+    .fav{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;color:#c2cbd8;background:#f8fbff;box-shadow:inset 0 0 0 1px rgba(50,80,130,.08);flex:0 0 auto}.fav.active{color:var(--orange);background:#fff7e8}
+    .fav svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linejoin:round}.fav.active svg{fill:currentColor;stroke:currentColor}
+    .liveTag{height:22px;border-radius:999px;padding:0 8px;display:flex;align-items:center;gap:5px;background:#fff0f1;color:var(--red);font-weight:900;font-size:11px;white-space:nowrap}.liveTag::before{content:"";width:5px;height:5px;background:var(--red);border-radius:50%;box-shadow:0 0 0 3px rgba(238,71,90,.12)}
+    .prematchTag{height:22px;border-radius:999px;padding:0 8px;background:#fff8e9;color:#b96b08;font-weight:900;font-size:11px;white-space:nowrap;display:grid;place-items:center}
+    .marketCount{font-size:12px;color:#6e82a0;font-weight:850;white-space:nowrap}.marketCount b{color:var(--blue);font-weight:900}
+    .teamsScore{display:grid;grid-template-columns:minmax(0,1fr) 74px minmax(0,1fr);align-items:center;gap:8px;margin:2px 0 9px}
+    .teamSide{display:flex;align-items:center;gap:7px;min-width:0}.teamSide.away{justify-content:flex-end}.teamSide.away .teamText{text-align:right}
+    .abbr{width:31px;height:31px;border-radius:50%;display:grid;place-items:center;font-weight:950;font-size:12px;letter-spacing:-.03em;flex:0 0 auto}.abbr.orange{background:#fff2d8;color:#bd7000}.abbr.blue{background:#e2f2ff;color:#1582c4}.abbr.green{background:#e3f9ee;color:#0d9a5f}.abbr.red{background:#ffe9ec;color:#d33b4a}.abbr.gold{background:#fff5dc;color:#b66a00}.abbr.flag{background:linear-gradient(135deg,#fff8df,#e52435 45%,#1eb35f 46%,#1eb35f);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.28)}
+    .teamText{min-width:0}.teamText b{display:block;font-size:14px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.teamText small{display:block;color:#96a4b6;font-size:10px;margin-top:1px;white-space:nowrap}
+    .scoreBox{height:34px;border-radius:999px;background:#eef6ff;color:var(--blue);display:grid;place-items:center;font-weight:950;font-size:17px;letter-spacing:.02em}
+    .oddsGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}.oddsBtn{min-height:48px;border-radius:10px;background:#eef6ff;color:#566a86;padding:5px 5px 4px;display:flex;flex-direction:column;justify-content:center;gap:3px;align-items:center;border:1px solid rgba(47,125,246,.05);transition:.18s ease;position:relative;overflow:hidden}.oddsBtn span{font-size:11px;font-weight:800;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}.oddsBtn b{font-size:15px;font-weight:950;color:var(--blue)}.oddsBtn.selected{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 8px 16px rgba(47,125,246,.24)}.oddsBtn.selected b{color:#fff}.oddsBtn.locked{background:#f2f5f9;color:#b3bfd0;pointer-events:none}.oddsBtn.changed::after{content:"";position:absolute;top:5px;right:5px;width:6px;height:6px;background:var(--orange);border-radius:50%}
+    .matchActions{display:flex;align-items:center;justify-content:space-between;margin-top:8px}.openMarkets{height:32px;border-radius:999px;padding:0 13px;background:#f8fbff;color:#32455e;font-weight:900;font-size:12px;box-shadow:inset 0 0 0 1px var(--line);display:flex;align-items:center;gap:5px}.detailLink{height:32px;border-radius:999px;padding:0 12px;color:var(--blue);font-weight:900;font-size:12px;display:flex;align-items:center;gap:3px}
+    .emptyState{display:none;padding:34px 12px;text-align:center;color:#7788a0}.emptyState .emptyIcon{width:58px;height:58px;margin:0 auto 12px;border-radius:18px;background:#eaf3ff;display:grid;place-items:center;color:var(--blue)}.emptyState svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:2}.emptyState b{display:block;font-size:15px;color:#24324a;margin-bottom:4px}.emptyState p{margin:0;font-size:12px;line-height:1.6}
+
+    .bottomBar{
+      position:absolute;left:10px;right:10px;bottom:calc(10px + var(--safe-bottom));height:70px;background:rgba(255,255,255,.94);border-radius:18px;box-shadow:0 12px 36px rgba(10,52,120,.18);border:1px solid rgba(35,80,150,.08);z-index:22;display:flex;align-items:center;gap:10px;padding:10px;backdrop-filter:blur(18px);
+    }
+    .slipMini{display:flex;align-items:center;gap:9px;flex:1;min-width:0}.slipIcon{width:40px;height:40px;border-radius:13px;background:#eaf3ff;color:var(--blue);display:grid;place-items:center;position:relative}.slipIcon svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.slipBadge{position:absolute;right:-5px;top:-5px;min-width:20px;height:20px;border-radius:999px;background:var(--blue);color:#fff;display:grid;place-items:center;font-size:11px;font-weight:950;border:2px solid #fff}.slipInfo{min-width:0}.slipInfo b{display:block;font-size:15px;font-weight:950}.slipInfo small{display:block;margin-top:3px;color:#76879f;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.primaryBtn{height:48px;border-radius:15px;background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;font-weight:950;font-size:15px;padding:0 22px;box-shadow:0 10px 20px rgba(47,125,246,.24);white-space:nowrap}.primaryBtn:disabled{background:#dbe4ef;color:#8fa0b8;box-shadow:none}
+
+    .overlay{position:absolute;inset:0;background:rgba(11,22,43,.44);z-index:60;opacity:0;pointer-events:none;transition:.2s ease;backdrop-filter:blur(2px)}.overlay.show{opacity:1;pointer-events:auto}
+    .sheet{position:absolute;left:0;right:0;bottom:0;max-height:88%;background:#fff;border-radius:20px 20px 0 0;z-index:70;transform:translateY(105%);transition:transform .25s cubic-bezier(.2,.9,.2,1);box-shadow:0 -24px 60px rgba(11,34,72,.22);display:flex;flex-direction:column;overflow:hidden}.sheet.show{transform:translateY(0)}
+    #slipSheet.show{height:84%}#filterSheet.show{height:78%}#betsSheet.show{height:82%}
+    .sheetHandle{width:42px;height:5px;border-radius:999px;background:#d9e1ec;margin:8px auto 6px;flex:0 0 auto}.sheetHead{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-bottom:1px solid var(--line);flex:0 0 auto}.sheetTitle{font-size:17px;font-weight:950;display:flex;align-items:center;gap:7px}.sheetTitle .blueBadge{min-width:22px;height:22px;border-radius:999px;background:#e5f0ff;color:var(--blue);font-size:12px;font-weight:950;display:grid;place-items:center}.sheetAction{height:30px;border-radius:999px;padding:0 10px;color:#5f6f85;font-weight:850;font-size:13px}.sheetClose{width:32px;height:32px;border-radius:999px;background:#f4f7fb;display:grid;place-items:center;color:#65758e}.sheetClose svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}.sheetBody{overflow:auto;flex:1;padding:12px 14px calc(18px + var(--safe-bottom));scrollbar-width:none}.sheetBody::-webkit-scrollbar{width:0}
+
+    .seg{display:inline-flex;background:#f4f7fb;border-radius:10px;padding:3px;gap:3px}.segBtn{height:30px;min-width:58px;border-radius:8px;color:#64748b;font-weight:850;font-size:13px}.segBtn.active{background:var(--blue);color:#fff;box-shadow:0 6px 16px rgba(47,125,246,.2)}
+    .slipItem{border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px;margin-bottom:10px;box-shadow:0 5px 18px rgba(40,80,140,.05)}.slipItemTop{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.pickName{font-size:15px;font-weight:950;color:var(--blue);line-height:1.2}.pickMeta{margin-top:4px;color:#566981;font-size:12px;font-weight:800}.pickMeta .red{color:var(--red)}.pickOdds{font-size:13px;color:#4a5d75;font-weight:850;white-space:nowrap}.pickOdds b{color:var(--blue);font-size:17px}.removePick{width:30px;height:30px;border-radius:10px;background:#f5f7fb;color:#8794a8;display:grid;place-items:center;flex:0 0 auto}.removePick svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+    .stakeRow{display:grid;grid-template-columns:1fr;align-items:center;gap:8px;margin-top:10px}.stakeInput{height:44px;border-radius:12px;border:1px solid var(--line);background:#fbfdff;padding:0 11px;display:flex;align-items:center;gap:8px}.stakeInput label{font-size:11px;color:#8a9bb1;font-weight:850}.stakeInput input{min-width:0;flex:1;font-size:17px;font-weight:950}.stakeInput em{font-style:normal;color:#7788a0;font-size:13px;font-weight:850}.quickAmounts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.amt{height:34px;border-radius:999px;padding:0 8px;background:#edf6ff;color:var(--blue);font-size:12px;font-weight:950;white-space:nowrap;display:grid;place-items:center}.summaryBox{background:#f8fbff;border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:12px}.sumLine{display:flex;align-items:center;justify-content:space-between;margin:8px 0;color:#687a92;font-size:14px;font-weight:850}.sumLine b{color:var(--text);font-size:15px}.sumLine .green{color:var(--green)}.sheetPrimary{width:100%;height:50px;border-radius:15px;background:linear-gradient(135deg,var(--blue),#166ce8);color:#fff;font-size:16px;font-weight:950;margin-top:12px;box-shadow:0 12px 24px rgba(47,125,246,.22)}
+
+    .filterGroup{margin-bottom:16px}.filterLabel{font-size:13px;color:#60728a;font-weight:900;margin:0 0 9px}.checkGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.checkItem{min-height:44px;border-radius:12px;background:#f7fbff;border:1px solid var(--line);display:flex;align-items:center;gap:8px;padding:0 10px;font-weight:850;color:#2d3d56;font-size:13px}.checkItem .box{width:18px;height:18px;border-radius:6px;border:1.5px solid #c6d2e2;display:grid;place-items:center;color:#fff;flex:0 0 auto}.checkItem.active{border-color:rgba(47,125,246,.35);background:#eaf3ff;color:var(--blue)}.checkItem.active .box{background:var(--blue);border-color:var(--blue)}.checkItem.active .box::after{content:"";width:8px;height:5px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(-45deg);margin-top:-2px}.rangeRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.rangeBox{height:44px;border-radius:12px;background:#f7fbff;border:1px solid var(--line);padding:0 10px;display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:850;color:#43536a}.filterFooter{display:grid;grid-template-columns:1fr 1.5fr;gap:10px;margin-top:4px}.secondaryBtn{height:48px;border-radius:14px;background:#f2f5f9;color:#42526b;font-weight:950;font-size:15px}
+
+    .detailScreen{position:absolute;inset:0;z-index:80;background:#fff;transform:translateX(105%);transition:transform .28s cubic-bezier(.2,.9,.2,1);display:flex;flex-direction:column;overflow:hidden}.detailScreen.show{transform:translateX(0)}.detailTop{height:58px;padding:calc(6px + env(safe-area-inset-top,0px)) 12px 0;background:#fff;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);flex:0 0 auto}.detailTitle{font-weight:950;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:230px}.backBtn{width:36px;height:36px;border-radius:999px;display:grid;place-items:center;color:#15243e}.backBtn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.detailActions{display:flex;align-items:center;gap:5px}.detailHero{background:linear-gradient(135deg,#1269e8,#3b87ff);color:#fff;padding:18px 12px 16px;position:relative;overflow:hidden;flex:0 0 auto}.detailHero::before{content:"";position:absolute;width:160px;height:160px;border-radius:999px;background:rgba(255,255,255,.11);right:-50px;top:-50px}.detailTeams{display:grid;grid-template-columns:1fr 92px 1fr;gap:10px;align-items:center;position:relative}.detailTeam{display:grid;justify-items:center;gap:7px;text-align:center}.detailTeam .abbr{width:50px;height:50px;font-size:15px}.detailTeam b{font-size:14px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.detailScore{display:grid;justify-items:center;gap:6px}.detailScore strong{font-size:40px;line-height:.95;letter-spacing:.03em}.detailScore span{height:24px;border-radius:999px;padding:0 9px;background:#fff1f1;color:var(--red);display:flex;align-items:center;font-size:12px;font-weight:950}.detailLeague{margin-top:12px;text-align:center;font-size:13px;color:rgba(255,255,255,.86);font-weight:850}.detailMenu{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px;position:relative}.detailMenu button{height:36px;border-radius:10px;background:rgba(255,255,255,.14);color:#fff;font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center;gap:5px}.detailMenu svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.marketTabs{height:50px;display:flex;gap:8px;overflow:auto;padding:8px 12px 6px;border-bottom:1px solid var(--line);scrollbar-width:none;flex:0 0 auto}.marketTabs::-webkit-scrollbar{display:none}.marketTab{height:36px;border-radius:999px;padding:0 13px;color:#4f6076;font-weight:900;font-size:14px;white-space:nowrap}.marketTab.active{background:#eaf3ff;color:var(--blue)}.marketsScroll{overflow:auto;flex:1;padding:12px 12px calc(84px + var(--safe-bottom));scrollbar-width:none}.marketsScroll::-webkit-scrollbar{width:0}.marketGroup{margin-bottom:14px}.marketGroupHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.marketGroupTitle{font-size:15px;font-weight:950}.marketGroupCount{font-size:12px;color:#7b8da5;font-weight:850}.detailOddsGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.detailOddsGrid.three{grid-template-columns:repeat(3,1fr)}.detailOddsBtn{min-height:48px;border-radius:11px;background:#eef6ff;border:1px solid rgba(47,125,246,.05);display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 12px;color:#60728a;font-size:13px;font-weight:850}.detailOddsBtn b{color:var(--blue);font-size:15px;font-weight:950}.detailOddsBtn.selected{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 8px 16px rgba(47,125,246,.22)}.detailOddsBtn.selected b{color:#fff}.expandMore{height:34px;border-radius:999px;background:#f8fbff;color:#5c6d84;font-weight:900;font-size:12px;margin:9px auto 0;padding:0 14px;display:flex;align-items:center;gap:5px;box-shadow:inset 0 0 0 1px var(--line)}.detailBottom{position:absolute;left:10px;right:10px;bottom:calc(10px + var(--safe-bottom));height:60px;border-radius:16px;background:rgba(255,255,255,.95);box-shadow:0 12px 34px rgba(10,52,120,.18);border:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:8px;z-index:2;backdrop-filter:blur(16px)}
+
+    .toast{position:absolute;left:50%;bottom:calc(94px + var(--safe-bottom));transform:translate(-50%,20px);opacity:0;pointer-events:none;background:rgba(15,28,50,.92);color:#fff;border-radius:999px;padding:10px 14px;z-index:120;font-size:13px;font-weight:850;box-shadow:0 12px 30px rgba(15,28,50,.24);transition:.25s ease;white-space:nowrap}.toast.show{opacity:1;transform:translate(-50%,0)}
+    .skeleton{height:112px;border-radius:14px;background:linear-gradient(90deg,#eef3fa 0%,#f8fbff 50%,#eef3fa 100%);background-size:200% 100%;animation:sk 1.3s linear infinite;margin-bottom:10px}@keyframes sk{from{background-position:200% 0}to{background-position:-200% 0}}
+    .spin{animation:spin .75s linear}@keyframes spin{to{transform:rotate(360deg)}}
+    .recordCard{border:1px solid var(--line);border-radius:14px;background:#fff;padding:11px;margin-bottom:10px}.recordTop{display:flex;justify-content:space-between;gap:10px}.recordStatus{height:24px;border-radius:999px;padding:0 9px;display:grid;place-items:center;font-size:12px;font-weight:950;background:#fff4df;color:#b76b00}.recordStatus.win{background:#e5f8ef;color:var(--green)}.recordCard b{font-size:14px}.recordCard p{margin:5px 0 0;color:#64758d;font-size:12px;line-height:1.5}.recordMoney{text-align:right}.recordMoney strong{display:block;color:var(--blue);font-size:17px}.recordMoney small{display:block;color:#72839b;margin-top:2px}
+    .settingsList{display:grid;gap:8px}.settingsItem{height:48px;border-radius:13px;background:#f8fbff;border:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-weight:900;color:#263854}.settingsItem span{font-size:13px;color:#74849b;font-weight:850}.switch{width:48px;height:28px;border-radius:999px;background:#dbe4ee;padding:3px;transition:.2s}.switch::after{content:"";display:block;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 2px 8px rgba(0,0,0,.15)}.switch.on{background:var(--blue)}.switch.on::after{transform:translateX(20px)}
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="status-safe"></div>
+  <header class="topbar">
+    <button class="brand" id="brandBtn" aria-label="PM体育首页">
+      <span class="brandIcon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M5 18h14l1-10-5 4-3-6-3 6-5-4 1 10Z"/><path d="M5 18h14v2H5z"/></svg>
+      </span>
+      <span class="brandName">PM体育</span>
+    </button>
+    <button class="pillStatus" id="wsBtn"><span class="dot"></span><span class="mono" id="wsText">WS · 0s</span></button>
+    <button class="iconBtn" id="settingsBtn" aria-label="设置"><svg viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.8 1.8 0 0 0 .36 1.98l.04.04a2.1 2.1 0 0 1-2.98 2.98l-.04-.04a1.8 1.8 0 0 0-1.98-.36 1.8 1.8 0 0 0-1.1 1.66V21a2.1 2.1 0 0 1-4.2 0v-.06a1.8 1.8 0 0 0-1.1-1.66 1.8 1.8 0 0 0-1.98.36l-.04.04a2.1 2.1 0 1 1-2.98-2.98l.04-.04A1.8 1.8 0 0 0 3.8 15a1.8 1.8 0 0 0-1.66-1.1H2.1a2.1 2.1 0 0 1 0-4.2h.06A1.8 1.8 0 0 0 3.82 8a1.8 1.8 0 0 0-.36-1.98l-.04-.04a2.1 2.1 0 0 1 2.98-2.98l.04.04A1.8 1.8 0 0 0 8.4 3.4 1.8 1.8 0 0 0 9.5 1.74V1.7a2.1 2.1 0 0 1 4.2 0v.06A1.8 1.8 0 0 0 14.8 3.4a1.8 1.8 0 0 0 1.98-.36l.04-.04a2.1 2.1 0 1 1 2.98 2.98l-.04.04A1.8 1.8 0 0 0 19.4 8c.18.64.69 1.1 1.36 1.1h.14a2.1 2.1 0 1 1 0 4.2h-.14A1.8 1.8 0 0 0 19.4 15Z"/></svg></button>
+    <button class="walletBtn" id="walletBtn"><span class="avatar">D</span><span class="walletText"><small>dmac001</small><b class="mono">¥91,510.00</b></span></button>
+  </header>
+
+  <nav class="mainTabs" id="mainTabs" aria-label="赛事主筛选">
+    <button class="mainTab active" data-tab="all">全部</button>
+    <button class="mainTab" data-tab="live">滚球 <span class="countBadge">14</span></button>
+    <button class="mainTab" data-tab="today">今日</button>
+    <button class="mainTab" data-tab="early">早盘</button>
+    <button class="mainTab" data-tab="hot">热门</button>
+    <button class="mainTab" data-tab="fav">收藏</button>
+    <button class="mainTab" data-tab="champion">冠军</button>
+  </nav>
+
+  <main class="scroll" id="scroll">
+    <div class="searchRow">
+      <label class="searchBox">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+        <input id="searchInput" type="search" placeholder="搜索球队 / 联赛 / 国家" />
+      </label>
+      <button class="filterBtn" id="openFilter"><svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg>筛选</button>
+    </div>
+
+    <section class="quickPanel">
+      <div class="quickTop">
+        <span class="quickTitle">联赛快捷入口</span>
+        <button class="quickSort" id="openFilter2">全部联赛 <span>›</span></button>
+      </div>
+      <div class="leagueStrip" id="leagueStrip"></div>
+    </section>
+
+    <div class="dateChips" id="dateChips">
+      <button class="dateChip active" data-date="all">全部</button>
+      <button class="dateChip" data-date="today">今天</button>
+      <button class="dateChip" data-date="tomorrow">明天</button>
+      <button class="dateChip" data-date="0611">06/11 周四</button>
+      <button class="dateChip" data-date="0612">06/12 周五</button>
+      <button class="dateChip" data-date="0613">06/13 周六</button>
+    </div>
+
+    <div id="matchList"></div>
+    <section class="emptyState" id="emptyState">
+      <div class="emptyIcon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+      <b>暂无符合条件的赛事</b>
+      <p>可重置筛选条件，或切换到全部 / 今日 / 早盘继续浏览。</p>
+    </section>
+  </main>
+
+  <div class="bottomBar">
+    <button class="slipMini" id="openSlip">
+      <span class="slipIcon"><svg viewBox="0 0 24 24"><path d="M7 3h10a2 2 0 0 1 2 2v16l-4-2-3 2-3-2-4 2V5a2 2 0 0 1 2-2Z"/><path d="M9 8h6M9 12h6"/></svg><span class="slipBadge" id="slipCount">0</span></span>
+      <span class="slipInfo"><b>投注单</b><small id="slipHint">点击赔率加入投注单</small></span>
+    </button>
+    <button class="primaryBtn" id="openSlipPrimary">去投注</button>
+  </div>
+
+  <div class="overlay" id="overlay"></div>
+
+  <section class="sheet" id="slipSheet" aria-modal="true" role="dialog">
+    <div class="sheetHandle"></div>
+    <div class="sheetHead">
+      <div class="sheetTitle">投注单 <span class="blueBadge" id="slipSheetCount">0</span></div>
+      <div><button class="sheetAction" id="clearSlip">清空</button><button class="sheetClose" data-close="slip"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    </div>
+    <div class="sheetBody">
+      <div class="seg" style="margin-bottom:10px"><button class="segBtn active" data-slip-mode="single">单关</button><button class="segBtn" data-slip-mode="parlay">串关</button></div>
+      <div id="slipItems"></div>
+      <div class="summaryBox">
+        <div class="sumLine"><span>总赔率</span><b class="mono" id="sumOdds">—</b></div>
+        <div class="sumLine"><span>投注金额</span><b class="mono" id="sumStake">¥ 0.00</b></div>
+        <div class="sumLine"><span>预计赢取</span><b class="mono green" id="sumWin">¥ 0.00</b></div>
+      </div>
+      <button class="sheetPrimary" id="submitBet">确认投注</button>
+    </div>
+  </section>
+
+  <section class="sheet" id="filterSheet" aria-modal="true" role="dialog">
+    <div class="sheetHandle"></div>
+    <div class="sheetHead">
+      <div class="sheetTitle">联赛筛选</div>
+      <button class="sheetClose" data-close="filter"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="sheetBody">
+      <div class="filterGroup"><h3 class="filterLabel">赛事状态</h3><div class="checkGrid" id="statusChecks"></div></div>
+      <div class="filterGroup"><h3 class="filterLabel">联赛范围</h3><div class="checkGrid" id="leagueChecks"></div></div>
+      <div class="filterGroup"><h3 class="filterLabel">盘口类型</h3><div class="checkGrid" id="marketChecks"></div></div>
+      <div class="filterGroup"><h3 class="filterLabel">开赛时间</h3><div class="rangeRow"><button class="rangeBox">今天 00:00 <span>›</span></button><button class="rangeBox">7天内 <span>›</span></button></div></div>
+      <div class="filterFooter"><button class="secondaryBtn" id="resetFilter">重置</button><button class="primaryBtn" id="applyFilter">应用筛选</button></div>
+    </div>
+  </section>
+
+  <section class="sheet" id="betsSheet" aria-modal="true" role="dialog">
+    <div class="sheetHandle"></div>
+    <div class="sheetHead">
+      <div class="sheetTitle">我的注单</div>
+      <button class="sheetClose" data-close="bets"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="sheetBody">
+      <div class="seg" id="recordTabs" style="margin-bottom:10px"><button class="segBtn active" data-record="all">全部</button><button class="segBtn" data-record="running">进行中</button><button class="segBtn" data-record="win">赢</button><button class="segBtn" data-record="lose">输</button></div>
+      <div id="recordsList"></div>
+    </div>
+  </section>
+
+  <section class="sheet" id="settingsSheet" aria-modal="true" role="dialog">
+    <div class="sheetHandle"></div>
+    <div class="sheetHead">
+      <div class="sheetTitle">设置</div>
+      <button class="sheetClose" data-close="settings"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="sheetBody">
+      <div class="settingsList">
+        <button class="settingsItem">赔率格式 <span>欧洲盘</span></button>
+        <button class="settingsItem">盘口排序 <span>热门优先</span></button>
+        <button class="settingsItem">赔率变化提醒 <span class="switch on"></span></button>
+        <button class="settingsItem">投注确认弹窗 <span class="switch on"></span></button>
+        <button class="settingsItem">声音与震动 <span class="switch"></span></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="sheet" id="walletSheet" aria-modal="true" role="dialog">
+    <div class="sheetHandle"></div>
+    <div class="sheetHead">
+      <div class="sheetTitle">账户余额</div>
+      <button class="sheetClose" data-close="wallet"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="sheetBody">
+      <div class="summaryBox" style="margin-top:0">
+        <div class="sumLine"><span>账号</span><b>dmac001</b></div>
+        <div class="sumLine"><span>余额</span><b class="mono">¥ 91,510.00</b></div>
+        <div class="sumLine"><span>今日盈亏</span><b class="mono green">+ ¥ 0.00</b></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px"><button class="primaryBtn">充值</button><button class="secondaryBtn" id="openBetsFromWallet">注单记录</button></div>
+    </div>
+  </section>
+
+  <section class="detailScreen" id="detailScreen">
+    <div class="detailTop">
+      <button class="backBtn" id="closeDetail"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <div class="detailTitle" id="detailTitle">赛事详情</div>
+      <div class="detailActions"><button class="backBtn" id="detailFav"><svg viewBox="0 0 24 24"><path d="M12 3.5 14.7 9l6 .9-4.4 4.2 1.1 6-5.4-2.9-5.4 2.9 1.1-6L3.3 9l6-.9L12 3.5Z"/></svg></button><button class="backBtn" id="refreshDetail"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v6h-6"/></svg></button></div>
+    </div>
+    <div class="detailHero">
+      <div class="detailTeams">
+        <div class="detailTeam"><span class="abbr orange" id="detailHomeAbbr">IND</span><b id="detailHome">印度尼西亚</b></div>
+        <div class="detailScore"><strong class="mono" id="detailScore">0 - 0</strong><span id="detailStatus">滚球 21’</span></div>
+        <div class="detailTeam"><span class="abbr gold" id="detailAwayAbbr">MOZ</span><b id="detailAway">莫桑比克</b></div>
+      </div>
+      <div class="detailLeague" id="detailLeague">国际比赛</div>
+      <div class="detailMenu"><button><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="m10 9 5 3-5 3V9Z"/></svg>直播</button><button><svg viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="M3 16l9 5 9-5"/><path d="M3 12l9 5 9-5"/></svg>阵容</button><button><svg viewBox="0 0 24 24"><path d="M4 19V5"/><path d="M8 19v-8"/><path d="M12 19v-5"/><path d="M16 19V9"/><path d="M20 19V7"/></svg>数据</button><button><svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M7 4v6"/><path d="M12 4v6"/><path d="M17 4v6"/><path d="M6 14h12"/><path d="M8 18h8"/></svg>事件</button></div>
+    </div>
+    <div class="marketTabs" id="marketTabs"><button class="marketTab active" data-market="all">全部盘口</button><button class="marketTab" data-market="handicap">让球</button><button class="marketTab" data-market="total">大小</button><button class="marketTab" data-market="winner">独赢</button><button class="marketTab" data-market="half">半场</button><button class="marketTab" data-market="more">更多</button></div>
+    <div class="marketsScroll" id="marketsScroll"></div>
+    <div class="detailBottom"><button class="slipMini" id="openSlipFromDetail"><span class="slipIcon"><svg viewBox="0 0 24 24"><path d="M7 3h10a2 2 0 0 1 2 2v16l-4-2-3 2-3-2-4 2V5a2 2 0 0 1 2-2Z"/><path d="M9 8h6M9 12h6"/></svg><span class="slipBadge" id="detailSlipCount">0</span></span><span class="slipInfo"><b>投注单</b><small id="detailSlipHint">暂无选项</small></span></button><button class="primaryBtn" id="detailBetBtn">去投注</button></div>
+  </section>
+
+  <div class="toast" id="toast">已加入投注单</div>
+</div>
+
+<script>
+(function(){
+  const leagues = [
+    {key:'all', name:'全部', icon:'globe'}, {key:'intl', name:'国际比赛', icon:'ball'}, {key:'epl', name:'英超', icon:'league'}, {key:'liga', name:'西甲', icon:'cup'}, {key:'serie', name:'意甲', icon:'triangle'}, {key:'bundes', name:'德甲', icon:'shield'}, {key:'ligue1', name:'法甲', icon:'badge'}
+  ];
+  const matches = [
+    {id:'m1', leagueKey:'intl', league:'国际比赛', group:'国际比赛', date:'today', tags:['live','hot'], favorite:false, home:'印度尼西亚', away:'莫桑比克', homeAbbr:'IND', awayAbbr:'MOZ', homeStyle:'orange', awayStyle:'gold', score:'0 - 0', status:'滚球 · 21’', statusType:'live', start:'今天 21:00', markets:56, odds:[
+      {type:'handicap', market:'让球', label:'印度尼西亚 -1.75', price:2.00}, {type:'handicap', market:'让球', label:'莫桑比克 +1.75', price:1.80}, {type:'total', market:'大小', label:'大 2.5', price:1.80}, {type:'total', market:'大小', label:'小 2.5', price:2.00}, {type:'winner', market:'独赢', label:'印度尼西亚', price:2.20}, {type:'winner', market:'独赢', label:'平局', price:3.10}, {type:'winner', market:'独赢', label:'莫桑比克', price:3.40}
+    ]},
+    {id:'m2', leagueKey:'intl', league:'国际比赛', group:'国际比赛', date:'today', tags:['live','hot'], favorite:false, home:'柬埔寨', away:'中国香港', homeAbbr:'CAM', awayAbbr:'HON', homeStyle:'blue', awayStyle:'red', score:'1 - 0', status:'滚球 · 中场', statusType:'live', start:'今天 20:30', markets:63, odds:[
+      {type:'handicap', market:'让球', label:'柬埔寨 -1', price:1.98}, {type:'handicap', market:'让球', label:'中国香港 +1', price:1.82}, {type:'total', market:'大小', label:'大 2.5', price:1.82}, {type:'total', market:'大小', label:'小 2.5', price:1.98}, {type:'winner', market:'独赢', label:'柬埔寨', price:1.65}, {type:'winner', market:'独赢', label:'平局', price:3.60}, {type:'winner', market:'独赢', label:'中国香港', price:5.40}
+    ]},
+    {id:'m3', leagueKey:'intl', league:'国际比赛', group:'国际比赛', date:'today', tags:['live'], favorite:false, home:'中国', away:'泰国', homeAbbr:'CHI', awayAbbr:'THA', homeStyle:'green', awayStyle:'blue', score:'0 - 0', status:'滚球 · 61’', statusType:'live', start:'今天 19:40', markets:65, odds:[
+      {type:'handicap', market:'让球', label:'中国 -0.5', price:1.98}, {type:'handicap', market:'让球', label:'泰国 +0.5', price:1.82}, {type:'total', market:'大小', label:'大 2.5', price:2.05}, {type:'total', market:'大小', label:'小 2.5', price:1.75}, {type:'winner', market:'独赢', label:'中国', price:2.05}, {type:'winner', market:'独赢', label:'平局', price:3.00}, {type:'winner', market:'独赢', label:'泰国', price:3.60}
+    ]},
+    {id:'m4', leagueKey:'intl', league:'国际比赛', group:'国际比赛', date:'today', tags:['live'], favorite:false, home:'菲律宾', away:'缅甸', homeAbbr:'PHI', awayAbbr:'', homeStyle:'gold', awayStyle:'flag', score:'2 - 0', status:'滚球 · 半场', statusType:'live', start:'今天 19:10', markets:71, odds:[
+      {type:'handicap', market:'让球', label:'菲律宾 -2.25', price:2.08}, {type:'handicap', market:'让球', label:'缅甸 +2.25', price:1.73}, {type:'total', market:'大小', label:'大 3', price:2.15}, {type:'total', market:'大小', label:'小 3', price:1.70}, {type:'winner', market:'独赢', label:'菲律宾', price:1.22}, {type:'winner', market:'独赢', label:'平局', price:5.10}, {type:'winner', market:'独赢', label:'缅甸', price:9.00}
+    ]},
+    {id:'m5', leagueKey:'epl', league:'英超', group:'英超', date:'tomorrow', tags:['early','hot'], favorite:false, home:'曼彻斯特城', away:'阿森纳', homeAbbr:'MCI', awayAbbr:'ARS', homeStyle:'blue', awayStyle:'red', score:'VS', status:'明天 · 03:00', statusType:'pre', start:'明天 03:00', markets:148, odds:[
+      {type:'handicap', market:'让球', label:'曼城 -0.25', price:1.91}, {type:'handicap', market:'让球', label:'阿森纳 +0.25', price:1.93}, {type:'total', market:'大小', label:'大 2.75', price:1.86}, {type:'total', market:'大小', label:'小 2.75', price:1.96}, {type:'winner', market:'独赢', label:'曼城', price:2.12}, {type:'winner', market:'独赢', label:'平局', price:3.40}, {type:'winner', market:'独赢', label:'阿森纳', price:3.05}
+    ]},
+    {id:'m6', leagueKey:'liga', league:'西甲', group:'西甲', date:'0611', tags:['early'], favorite:false, home:'皇家马德里', away:'巴塞罗那', homeAbbr:'RMA', awayAbbr:'BAR', homeStyle:'gold', awayStyle:'blue', score:'VS', status:'06/11 · 04:00', statusType:'pre', start:'06/11 04:00', markets:132, odds:[
+      {type:'handicap', market:'让球', label:'皇马 -0.5', price:2.02}, {type:'handicap', market:'让球', label:'巴萨 +0.5', price:1.82}, {type:'total', market:'大小', label:'大 3', price:1.92}, {type:'total', market:'大小', label:'小 3', price:1.90}, {type:'winner', market:'独赢', label:'皇马', price:2.02}, {type:'winner', market:'独赢', label:'平局', price:3.55}, {type:'winner', market:'独赢', label:'巴萨', price:3.20}
+    ]},
+    {id:'m7', leagueKey:'serie', league:'意甲', group:'意甲', date:'0612', tags:['champion'], favorite:false, home:'国际米兰', away:'尤文图斯', homeAbbr:'INT', awayAbbr:'JUV', homeStyle:'blue', awayStyle:'gold', score:'VS', status:'06/12 · 02:45', statusType:'pre', start:'06/12 02:45', markets:94, odds:[
+      {type:'handicap', market:'让球', label:'国际米兰 -0.25', price:1.90}, {type:'handicap', market:'让球', label:'尤文 +0.25', price:1.94}, {type:'total', market:'大小', label:'大 2.5', price:2.00}, {type:'total', market:'大小', label:'小 2.5', price:1.82}, {type:'winner', market:'独赢', label:'国际米兰', price:1.88}, {type:'winner', market:'独赢', label:'平局', price:3.35}, {type:'winner', market:'独赢', label:'尤文', price:4.10}
+    ]},
+    {id:'m8', leagueKey:'bundes', league:'德甲', group:'德甲', date:'0613', tags:['hot'], favorite:false, home:'拜仁慕尼黑', away:'多特蒙德', homeAbbr:'BAY', awayAbbr:'DOR', homeStyle:'red', awayStyle:'gold', score:'VS', status:'06/13 · 01:30', statusType:'pre', start:'06/13 01:30', markets:101, odds:[
+      {type:'handicap', market:'让球', label:'拜仁 -0.75', price:1.86}, {type:'handicap', market:'让球', label:'多特 +0.75', price:1.98}, {type:'total', market:'大小', label:'大 3.25', price:1.88}, {type:'total', market:'大小', label:'小 3.25', price:1.94}, {type:'winner', market:'独赢', label:'拜仁', price:1.68}, {type:'winner', market:'独赢', label:'平局', price:4.00}, {type:'winner', market:'独赢', label:'多特', price:4.60}
+    ]}
+  ];
+  const state = {tab:'all', league:'all', date:'all', query:'', selected:[], slipMode:'single', detailMatch:null, detailMarket:'all', filter:{status:new Set(['live','pre']), leagues:new Set(['intl','epl','liga','serie','bundes','ligue1']), markets:new Set(['handicap','total','winner'])}, records:[
+    {id:'r1', title:'大小 2.5 大', match:'秘鲁 vs 西班牙', stake:100, odds:2.00, result:'running', time:'2026/6/9 11:29:51'},
+    {id:'r2', title:'独赢 不丹', match:'Sri Lanka vs Bhutan', stake:100, odds:41.00, result:'running', time:'2026/6/8 20:26:08'},
+    {id:'r3', title:'让球 瑞士 +1.75', match:'卡塔尔 vs 瑞士', stake:150, odds:1.88, result:'win', time:'2026/6/8 17:26:26'}
+  ], recordTab:'all'};
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+  const icons = {
+    globe:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.2 2.4 3.2 5.4 3.2 9S14.2 18.6 12 21M12 3c-2.2 2.4-3.2 5.4-3.2 9s1 6.6 3.2 9"/></svg>',
+    ball:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m12 7 4 3-1.5 5h-5L8 10l4-3Z"/><path d="M12 7V3M16 10l4-2M14.5 15l2.5 4M9.5 15 7 19M8 10 4 8"/></svg>',
+    league:'<svg viewBox="0 0 24 24"><path d="M5 20V8l7-4 7 4v12"/><path d="M8 20v-7h8v7"/><path d="M9 9h.01M15 9h.01"/></svg>',
+    cup:'<svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4Z"/><path d="M8 6H5a3 3 0 0 0 3 5M16 6h3a3 3 0 0 1-3 5M12 13v5M9 20h6"/></svg>',
+    triangle:'<svg viewBox="0 0 24 24"><path d="m12 4 8 16H4L12 4Z"/><path d="M12 10v4M12 17h.01"/></svg>',
+    shield:'<svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.3 2.8 7.7 7 10 4.2-2.3 7-5.7 7-10V6l-7-3Z"/><path d="M9 12h6"/></svg>',
+    badge:'<svg viewBox="0 0 24 24"><path d="M12 3 4 7v6c0 4 3.2 6.8 8 8 4.8-1.2 8-4 8-8V7l-8-4Z"/><path d="M8 11h8M8 15h8"/></svg>'
+  };
+  function fmt(n){ return '¥ ' + Number(n||0).toLocaleString('zh-CN',{minimumFractionDigits:2, maximumFractionDigits:2}); }
+  function pickKey(matchId, odd){ return [matchId, odd.type || '', odd.market, odd.label, Number(odd.price).toFixed(2)].map(encodeURIComponent).join('|'); }
+  function selectedKey(p){ return pickKey(p.matchId, p); }
+  function showToast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(showToast.timer); showToast.timer=setTimeout(()=>t.classList.remove('show'),1500); }
+  function openSheet(id){ $('#overlay').classList.add('show'); $(id).classList.add('show'); }
+  function closeSheets(){ $('#overlay').classList.remove('show'); $$('.sheet').forEach(s=>s.classList.remove('show')); }
+  $('#overlay').addEventListener('click', closeSheets); $$('[data-close]').forEach(b=>b.addEventListener('click', closeSheets));
+
+  function renderLeagues(){
+    const box=$('#leagueStrip'); box.innerHTML = leagues.map(l=>`<button class="leagueItem ${state.league===l.key?'active':''}" data-league="${l.key}"><span class="leagueIcon">${icons[l.icon]}</span><span>${l.name}</span></button>`).join('');
+    box.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{state.league=btn.dataset.league; renderAll();}));
+  }
+  function passTab(m){
+    if(state.tab==='all') return true;
+    if(state.tab==='live') return m.tags.includes('live');
+    if(state.tab==='today') return m.date==='today';
+    if(state.tab==='early') return m.tags.includes('early') || m.statusType==='pre';
+    if(state.tab==='hot') return m.tags.includes('hot');
+    if(state.tab==='fav') return m.favorite;
+    if(state.tab==='champion') return m.tags.includes('champion');
+    return true;
+  }
+  function filteredMatches(){
+    const q=state.query.trim().toLowerCase();
+    return matches.filter(m=>
+      passTab(m) &&
+      (state.league==='all' || m.leagueKey===state.league) &&
+      (state.date==='all' || m.date===state.date) &&
+      state.filter.status.has(m.statusType) &&
+      state.filter.leagues.has(m.leagueKey) &&
+      (q==='' || (m.home+m.away+m.league+m.homeAbbr+m.awayAbbr).toLowerCase().includes(q))
+    );
+  }
+  function marketTypesToShow(){ return Array.from(state.filter.markets); }
+  function renderMatchCard(m){
+    const odds = m.odds.filter(o=>marketTypesToShow().includes(o.type)).slice(0,6);
+    return `<article class="matchCard" data-match="${m.id}">
+      <div class="matchTop"><div class="leftMeta"><button class="fav ${m.favorite?'active':''}" data-fav="${m.id}"><svg viewBox="0 0 24 24"><path d="M12 3.5 14.7 9l6 .9-4.4 4.2 1.1 6-5.4-2.9-5.4 2.9 1.1-6L3.3 9l6-.9L12 3.5Z"/></svg></button><span class="${m.statusType==='live'?'liveTag':'prematchTag'}">${m.status}</span></div><button class="marketCount" data-detail="${m.id}"><b>${m.markets}</b> 个盘口</button></div>
+      <div class="teamsScore" data-detail="${m.id}">
+        <div class="teamSide"><span class="abbr ${m.homeStyle}">${m.homeAbbr}</span><span class="teamText"><b>${m.home}</b><small>${m.league}</small></span></div>
+        <div class="scoreBox mono">${m.score}</div>
+        <div class="teamSide away"><span class="teamText"><b>${m.away}</b><small>${m.start}</small></span><span class="abbr ${m.awayStyle}">${m.awayAbbr}</span></div>
+      </div>
+      <div class="oddsGrid">${odds.map(o=>{const key=pickKey(m.id,o); const sel=state.selected.some(p=>selectedKey(p)===key); return `<button class="oddsBtn ${sel?'selected':''}" data-odd="${key}"><span>${o.market} · ${o.label}</span><b class="mono">${o.price.toFixed(2)}</b></button>`}).join('')}</div>
+      <div class="matchActions"><button class="openMarkets" data-detail="${m.id}">展开盘口 <span>⌄</span></button><button class="detailLink" data-detail="${m.id}">详情 <span>›</span></button></div>
+    </article>`;
+  }
+  function renderList(){
+    const list=$('#matchList'); const ms=filteredMatches();
+    if(ms.length===0){ list.innerHTML=''; $('#emptyState').style.display='block'; return; }
+    $('#emptyState').style.display='none';
+    const groups = [...new Set(ms.map(m=>m.group))];
+    list.innerHTML = groups.map(g=>{
+      const rows=ms.filter(m=>m.group===g);
+      return `<section><div class="leagueHeader"><div class="leagueName"><span class="smallBall">${icons.ball}</span><span>${g}</span></div><span class="leagueCount">${rows.length} 场</span></div>${rows.map(renderMatchCard).join('')}</section>`
+    }).join('');
+    list.querySelectorAll('[data-fav]').forEach(b=>b.addEventListener('click',ev=>{ev.stopPropagation(); const m=matches.find(x=>x.id===b.dataset.fav); m.favorite=!m.favorite; showToast(m.favorite?'已加入收藏':'已取消收藏'); renderAll();}));
+    list.querySelectorAll('[data-odd]').forEach(b=>b.addEventListener('click',ev=>{ev.stopPropagation(); toggleOdd(b.dataset.odd);}));
+    list.querySelectorAll('[data-detail]').forEach(b=>b.addEventListener('click',ev=>{ev.stopPropagation(); openDetail(b.dataset.detail);}));
+  }
+  function toggleOdd(key){
+    const [matchId, type, market, label, price] = key.split('|').map(decodeURIComponent);
+    const m=matches.find(x=>x.id===matchId); const o=m.odds.find(x=>x.market===market && x.label===label) || {type, market, label, price:Number(price)};
+    const idx=state.selected.findIndex(p=>selectedKey(p)===key);
+    if(idx>=0){ state.selected.splice(idx,1); showToast('已移除投注选项'); }
+    else {
+      const sameMarket = state.selected.findIndex(p=>p.matchId===matchId && p.market===market);
+      if(sameMarket>=0) state.selected.splice(sameMarket,1);
+      state.selected.push({matchId, match:m.home+' vs '+m.away, league:m.league, status:m.status, type:o.type, market:o.market, label:o.label, price:Number(o.price), stake:100});
+      showToast('已加入投注单');
+    }
+    renderAll(false);
+  }
+  function renderSlip(){
+    const count=state.selected.length; $('#slipCount').textContent=count; $('#slipSheetCount').textContent=count; $('#detailSlipCount').textContent=count;
+    const totalStake=state.selected.reduce((a,b)=>a+Number(b.stake||0),0);
+    $('#slipHint').textContent=count?`${count} 个选项 · ${fmt(totalStake)}`:'点击赔率加入投注单';
+    $('#detailSlipHint').textContent=count?`${count} 个选项 · ${fmt(totalStake)}`:'暂无选项';
+    $('#openSlipPrimary').disabled=count===0; $('#detailBetBtn').disabled=count===0;
+    const box=$('#slipItems');
+    if(count===0){ box.innerHTML='<div class="emptyState" style="display:block;padding:28px 0"><div class="emptyIcon"><svg viewBox="0 0 24 24"><path d="M7 3h10a2 2 0 0 1 2 2v16l-4-2-3 2-3-2-4 2V5a2 2 0 0 1 2-2Z"/></svg></div><b>投注单为空</b><p>在赛事卡片或全部盘口页点击赔率即可加入。</p></div>'; }
+    else {
+      box.innerHTML=state.selected.map((p,i)=>`<div class="slipItem"><div class="slipItemTop"><div><div class="pickName">${p.market} ${p.label}</div><div class="pickMeta">${p.match}<br><span>${p.league}</span> · <span class="red">${p.status}</span></div></div><div style="display:flex;gap:4px;align-items:flex-start"><div class="pickOdds">@ <b class="mono">${p.price.toFixed(2)}</b></div><button class="removePick" data-remove="${i}"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div></div><div class="stakeRow"><label class="stakeInput"><span><label>金额</label></span><input type="number" data-stake="${i}" min="0" value="${p.stake}"><em>¥</em></label><div class="quickAmounts"><button class="amt" data-amt="${i}:50">+50</button><button class="amt" data-amt="${i}:100">+100</button><button class="amt" data-amt="${i}:500">+500</button><button class="amt" data-amt="${i}:max">最大</button></div></div></div>`).join('');
+      box.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',()=>{state.selected.splice(Number(b.dataset.remove),1); renderAll(false); showToast('已移除投注选项');}));
+      box.querySelectorAll('[data-stake]').forEach(inp=>inp.addEventListener('input',()=>{state.selected[Number(inp.dataset.stake)].stake=Math.max(0,Number(inp.value||0)); renderSlipSummary();}));
+      box.querySelectorAll('[data-amt]').forEach(b=>b.addEventListener('click',()=>{const [i,v]=b.dataset.amt.split(':'); const p=state.selected[Number(i)]; p.stake = v==='max'?5000:Number(p.stake||0)+Number(v); renderSlip();}));
+    }
+    renderSlipSummary();
+  }
+  function renderSlipSummary(){
+    const count=state.selected.length;
+    const totalStake=state.selected.reduce((a,b)=>a+Number(b.stake||0),0);
+    let totalOdds='—', expected=0;
+    if(count){
+      if(state.slipMode==='parlay' && count>1){ const o=state.selected.reduce((a,b)=>a*b.price,1); totalOdds=o.toFixed(2); expected=totalStake*o; }
+      else { const o=state.selected.reduce((a,b)=>a+b.price,0); totalOdds=o.toFixed(2); expected=state.selected.reduce((a,b)=>a+Number(b.stake||0)*b.price,0); }
+    }
+    $('#sumOdds').textContent=totalOdds; $('#sumStake').textContent=fmt(totalStake); $('#sumWin').textContent=fmt(expected); $('#submitBet').disabled=count===0 || totalStake<=0;
+    $('#slipHint').textContent=count?`${count} 个选项 · ${fmt(totalStake)}`:'点击赔率加入投注单';
+    $('#detailSlipHint').textContent=count?`${count} 个选项 · ${fmt(totalStake)}`:'暂无选项';
+  }
+  function renderFilters(){
+    $('#statusChecks').innerHTML=[['live','滚球'],['pre','早盘/未开赛']].map(([k,n])=>`<button class="checkItem ${state.filter.status.has(k)?'active':''}" data-fs="status:${k}"><span class="box"></span>${n}</button>`).join('');
+    $('#leagueChecks').innerHTML=leagues.filter(l=>l.key!=='all').map(l=>`<button class="checkItem ${state.filter.leagues.has(l.key)?'active':''}" data-fs="leagues:${l.key}"><span class="box"></span>${l.name}</button>`).join('');
+    $('#marketChecks').innerHTML=[['handicap','让球'],['total','大小'],['winner','独赢'],['half','半场']].map(([k,n])=>`<button class="checkItem ${state.filter.markets.has(k)?'active':''}" data-fs="markets:${k}"><span class="box"></span>${n}</button>`).join('');
+    $$('#filterSheet [data-fs]').forEach(b=>b.addEventListener('click',()=>{const [group,key]=b.dataset.fs.split(':'); const set=state.filter[group]; if(set.has(key)) set.delete(key); else set.add(key); renderFilters();}));
+  }
+  function openDetail(id){
+    const m=matches.find(x=>x.id===id); state.detailMatch=m; state.detailMarket='all';
+    $('#detailTitle').textContent=m.home+' vs '+m.away; $('#detailHome').textContent=m.home; $('#detailAway').textContent=m.away; $('#detailHomeAbbr').textContent=m.homeAbbr; $('#detailAwayAbbr').textContent=m.awayAbbr; $('#detailScore').textContent=m.score; $('#detailStatus').textContent=m.status.replace(' · ',' '); $('#detailLeague').textContent=m.league; $('#detailHomeAbbr').className='abbr '+m.homeStyle; $('#detailAwayAbbr').className='abbr '+m.awayStyle;
+    $('#detailFav').style.color=m.favorite?'var(--orange)':'#15243e'; $$('#marketTabs .marketTab').forEach(b=>b.classList.toggle('active',b.dataset.market==='all'));
+    renderDetailMarkets(); $('#detailScreen').classList.add('show');
+  }
+  function renderDetailMarkets(){
+    const m=state.detailMatch; if(!m) return;
+    const groups=[
+      {key:'handicap', title:'让球', layout:'', odds:[...m.odds.filter(o=>o.type==='handicap'), {type:'handicap', market:'让球', label:m.home+' -1.5', price:1.85}, {type:'handicap', market:'让球', label:m.away+' +1.5', price:1.95}, {type:'handicap', market:'让球', label:m.home+' -2', price:2.25}, {type:'handicap', market:'让球', label:m.away+' +2', price:1.63}]},
+      {key:'total', title:'大小', layout:'', odds:[...m.odds.filter(o=>o.type==='total'), {type:'total', market:'大小', label:'大 3', price:2.25}, {type:'total', market:'大小', label:'小 3', price:1.63}, {type:'total', market:'大小', label:'大 2/2.5', price:1.60}, {type:'total', market:'大小', label:'小 2/2.5', price:2.30}]},
+      {key:'winner', title:'独赢', layout:'three', odds:m.odds.filter(o=>o.type==='winner')},
+      {key:'half', title:'半场', layout:'three', odds:[{type:'half', market:'半场独赢', label:m.home, price:1.67}, {type:'half', market:'半场独赢', label:'平局', price:2.75}, {type:'half', market:'半场独赢', label:m.away, price:8.50}]}
+    ].filter(g=>state.detailMarket==='all'||state.detailMarket===g.key);
+    $('#marketsScroll').innerHTML=groups.map(g=>`<section class="marketGroup"><div class="marketGroupHead"><div class="marketGroupTitle">${g.title}</div><div class="marketGroupCount">${m.markets} 个盘口</div></div><div class="detailOddsGrid ${g.layout==='three'?'three':''}">${g.odds.map(o=>{const key=pickKey(m.id,o); const sel=state.selected.some(p=>selectedKey(p)===key); return `<button class="detailOddsBtn ${sel?'selected':''}" data-detail-odd="${key}"><span>${o.label}</span><b class="mono">${o.price.toFixed(2)}</b></button>`}).join('')}</div><button class="expandMore">展开更多 <span>⌄</span></button></section>`).join('');
+    $('#marketsScroll').querySelectorAll('[data-detail-odd]').forEach(b=>b.addEventListener('click',()=>toggleOdd(b.dataset.detailOdd)));
+  }
+  function renderRecords(){
+    let rows=state.records.filter(r=>state.recordTab==='all'||r.result===state.recordTab);
+    $('#recordsList').innerHTML=rows.map(r=>`<article class="recordCard"><div class="recordTop"><div><b>${r.title}</b><p>${r.match}<br>${r.time}</p></div><div class="recordMoney"><strong class="mono">@ ${r.odds.toFixed(2)}</strong><small>${fmt(r.stake)}</small><span class="recordStatus ${r.result==='win'?'win':''}">${r.result==='running'?'进行中':r.result==='win'?'已赢':'已输'}</span></div></div></article>`).join('') || '<div class="emptyState" style="display:block"><b>暂无记录</b><p>当前筛选下没有注单。</p></div>';
+  }
+  function renderAll(scrollTop=true){ renderLeagues(); renderList(); renderSlip(); renderDetailMarkets(); renderFilters(); renderRecords(); if(scrollTop) $('#scroll').scrollTop=0; }
+
+  $('#mainTabs').addEventListener('click',e=>{const b=e.target.closest('.mainTab'); if(!b) return; state.tab=b.dataset.tab; $$('#mainTabs .mainTab').forEach(x=>x.classList.toggle('active',x===b)); renderAll();});
+  $('#dateChips').addEventListener('click',e=>{const b=e.target.closest('.dateChip'); if(!b) return; state.date=b.dataset.date; $$('#dateChips .dateChip').forEach(x=>x.classList.toggle('active',x===b)); renderAll();});
+  $('#searchInput').addEventListener('input',e=>{state.query=e.target.value; renderList();});
+  $('#openFilter').addEventListener('click',()=>openSheet('#filterSheet')); $('#openFilter2').addEventListener('click',()=>openSheet('#filterSheet'));
+  $('#resetFilter').addEventListener('click',()=>{state.filter.status=new Set(['live','pre']); state.filter.leagues=new Set(['intl','epl','liga','serie','bundes','ligue1']); state.filter.markets=new Set(['handicap','total','winner']); state.league='all'; state.date='all'; $$('#dateChips .dateChip').forEach(x=>x.classList.toggle('active',x.dataset.date==='all')); renderAll(false); showToast('筛选已重置');});
+  $('#applyFilter').addEventListener('click',()=>{closeSheets(); renderAll(); showToast('已应用筛选');});
+  $('#openSlip').addEventListener('click',()=>openSheet('#slipSheet')); $('#openSlipPrimary').addEventListener('click',()=>openSheet('#slipSheet')); $('#openSlipFromDetail').addEventListener('click',()=>openSheet('#slipSheet')); $('#detailBetBtn').addEventListener('click',()=>openSheet('#slipSheet'));
+  $('#clearSlip').addEventListener('click',()=>{state.selected=[]; renderAll(false); showToast('投注单已清空');});
+  $$('#slipSheet [data-slip-mode]').forEach(b=>b.addEventListener('click',()=>{state.slipMode=b.dataset.slipMode; $$('#slipSheet [data-slip-mode]').forEach(x=>x.classList.toggle('active',x===b)); renderSlipSummary();}));
+  $('#submitBet').addEventListener('click',()=>{ if(!state.selected.length) return; state.selected.forEach(p=>state.records.unshift({id:'r'+Date.now()+Math.random(), title:p.market+' '+p.label, match:p.match, stake:Number(p.stake||0), odds:p.price, result:'running', time:new Date().toLocaleString('zh-CN',{hour12:false})})); state.selected=[]; closeSheets(); renderAll(false); showToast('投注成功，已进入我的注单'); setTimeout(()=>openSheet('#betsSheet'),500); });
+  $('#settingsBtn').addEventListener('click',()=>openSheet('#settingsSheet')); $('#walletBtn').addEventListener('click',()=>openSheet('#walletSheet')); $('#brandBtn').addEventListener('click',()=>{state.tab='all'; state.league='all'; state.date='all'; state.query=''; $('#searchInput').value=''; $$('#mainTabs .mainTab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='all')); $$('#dateChips .dateChip').forEach(x=>x.classList.toggle('active',x.dataset.date==='all')); renderAll(); showToast('已返回全部赛事');});
+  $('#openBetsFromWallet').addEventListener('click',()=>{closeSheets(); setTimeout(()=>openSheet('#betsSheet'),180);});
+  $('#recordTabs').addEventListener('click',e=>{const b=e.target.closest('[data-record]'); if(!b) return; state.recordTab=b.dataset.record; $$('#recordTabs .segBtn').forEach(x=>x.classList.toggle('active',x===b)); renderRecords();});
+  $('#closeDetail').addEventListener('click',()=>$('#detailScreen').classList.remove('show'));
+  $('#detailFav').addEventListener('click',()=>{if(!state.detailMatch)return; state.detailMatch.favorite=!state.detailMatch.favorite; $('#detailFav').style.color=state.detailMatch.favorite?'var(--orange)':'#15243e'; renderList(); showToast(state.detailMatch.favorite?'已加入收藏':'已取消收藏');});
+  $('#refreshDetail').addEventListener('click',()=>{const btn=$('#refreshDetail'); btn.classList.add('spin'); setTimeout(()=>btn.classList.remove('spin'),800); showToast('盘口已刷新');});
+  $('#marketTabs').addEventListener('click',e=>{const b=e.target.closest('[data-market]'); if(!b) return; state.detailMarket=b.dataset.market; $$('#marketTabs .marketTab').forEach(x=>x.classList.toggle('active',x===b)); renderDetailMarkets();});
+  $('#wsBtn').addEventListener('click',()=>{const btn=$('#wsBtn'); btn.querySelector('.dot').style.background=btn.querySelector('.dot').style.background?'':'#16b978'; showToast('连接正常，盘口实时更新');});
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if($('#detailScreen').classList.contains('show')) $('#detailScreen').classList.remove('show'); else closeSheets(); }});
+  let ws=0; setInterval(()=>{$('#wsText').textContent='WS · '+(ws++%6)+'s';},1000);
+  setInterval(()=>{const btns=$$('.oddsBtn:not(.selected), .detailOddsBtn:not(.selected)'); if(btns.length){const b=btns[Math.floor(Math.random()*btns.length)]; b.classList.add('changed'); setTimeout(()=>b.classList.remove('changed'),1600);}},6500);
+  renderAll(false);
+})();
+</script>
+</body>
+</html>

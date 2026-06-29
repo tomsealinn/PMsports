@@ -397,13 +397,38 @@ class GoalserveInplayWS:
         except OSError:
             pass
 
-    def _flush_event(self, ev_id: int) -> bool:
+    def _flush_event(self, ev_id: int) -> "dict | None":
+        """Build + persist + fan-out one event's snapshot ON THE EVENT LOOP.
+
+        Returns the snapshot dict when something actually changed (so the
+        caller runs the blocking MySQL upsert off-loop via asyncio.to_thread),
+        or None when skipped/unchanged.  The DB write is deliberately NOT done
+        here: 3 synchronous MySQL round-trips per event x ~35 events on every
+        upstream `avl` reseed used to freeze the single-worker event loop,
+        stalling WS handshakes and /health for seconds.
+        """
         st = self._state.get(ev_id)
         if not st:
-            return False
+            return None
         snap = _ws_event_to_rest(st)
         if not snap:
-            return False
+            return None
+        # Dedup: an upstream `avl` reseed (the WS reconnects ~every 50s and
+        # re-sends a FULL snapshot) marks every event dirty even when nothing
+        # changed.  Skip the disk write + fan-out + DB upsert when the
+        # bet-relevant snapshot is identical to the last flush.  Only the
+        # volatile `fetched_at` timestamp is excluded from the comparison, so
+        # any real odds/score/status/market change still flushes (worst case
+        # the guard is a harmless no-op).
+        try:
+            _sig_src = {k: v for k, v in snap.items() if k != "fetched_at"}
+            _sig = json.dumps(_sig_src, ensure_ascii=False, separators=(",", ":"),
+                              default=str, sort_keys=True)
+        except Exception:  # noqa: BLE001
+            _sig = None
+        if _sig is not None and st.get("_last_flush_sig") == _sig:
+            st["_last_snap"] = snap          # keep index/replay cache warm
+            return None
         self._ensure_dir()
         fid = str(snap["id"])
         tmp = GS_LIVE_DIR / f".{fid}.json.tmp"
@@ -414,9 +439,11 @@ class GoalserveInplayWS:
             os.replace(tmp, dst)
             st["_last_write_ts"] = time.time()
             st["_last_snap"] = snap
+            if _sig is not None:
+                st["_last_flush_sig"] = _sig
         except OSError as e:
             log.warning("flush %s failed: %s", dst, e)
-            return False
+            return None
         # Push snapshot to any subscribed /api/external/ws clients so
         # browsers see the same odds the snapshot file just got.  Failures
         # in fan-out MUST NOT affect the canonical disk write above.
@@ -424,15 +451,7 @@ class GoalserveInplayWS:
             self._publish(snap)
         except Exception as e:  # noqa: BLE001
             log.warning("publish %s failed: %s", fid, e)
-        # Optional DB hook — gated by GS_DB_WRITE.  Failures must NOT
-        # affect the snapshot pipeline.
-        try:
-            from . import goalserve_dbwriter as _gw
-            if _gw.GS_DB_WRITE:
-                _gw.upsert_event(snap)
-        except Exception as e:  # noqa: BLE001
-            log.warning("dbwriter upsert %s failed: %s", fid, e)
-        return True
+        return snap
 
     async def _flush_dirty_loop(self) -> None:
         """Coalesce per-event writes — at most one per GS_WS_WRITE_DEBOUNCE."""
@@ -451,8 +470,22 @@ class GoalserveInplayWS:
                 if (now - last) >= GS_WS_WRITE_DEBOUNCE:
                     ready.append(ev_id)
             for ev_id in ready:
-                self._flush_event(ev_id)
+                snap = self._flush_event(ev_id)
                 self._dirty.discard(ev_id)
+                # Run the (blocking) MySQL upsert OFF the event loop so a
+                # burst of flushes — e.g. an avl reseed of ~35 events — can't
+                # freeze the single worker (WS handshakes + /health were
+                # stalling for seconds during these bursts).  mysqldb uses a
+                # per-thread pymysql connection (threading.local) so calling
+                # it from the default thread executor is safe.
+                if snap is not None:
+                    try:
+                        from . import goalserve_dbwriter as _gw
+                        if _gw.GS_DB_WRITE:
+                            await asyncio.to_thread(_gw.upsert_event, snap)
+                    except Exception as e:  # noqa: BLE001
+                        log.warning("dbwriter upsert %s failed: %s",
+                                    snap.get("id"), e)
 
     async def _finalize_loop(self) -> None:
         """Finalise finished-but-unfinalised GS matches (set is_inball=1) so
@@ -478,7 +511,12 @@ class GoalserveInplayWS:
                             min_age = mysqldb.LIVE_WINDOW_SEC
                         except Exception:  # noqa: BLE001
                             min_age = 7200
-                        n = _gw.finalize_stale_gs(
+                        # Run OFF the event loop: finalize_stale_gs does a
+                        # blocking MySQL UPDATE (foot_match is MyISAM -> table
+                        # lock waits) and must never freeze the single-worker
+                        # loop.
+                        n = await asyncio.to_thread(
+                            _gw.finalize_stale_gs,
                             silence_sec=GS_WS_FINALIZE_SILENCE_SEC,
                             min_age_sec=min_age,
                         )
@@ -490,7 +528,7 @@ class GoalserveInplayWS:
                         # rows.  Sweep them together with finalisation —
                         # both passes are gated on feed health.
                         try:
-                            stats = _gw.dedupe_gs_pairs()
+                            stats = await asyncio.to_thread(_gw.dedupe_gs_pairs)
                             if stats.get("deleted") or stats.get("errors"):
                                 log.info(
                                     "dedupe_gs_pairs groups=%s deleted=%s kept_for_bets=%s errors=%s",
@@ -499,6 +537,24 @@ class GoalserveInplayWS:
                                 )
                         except Exception as e:  # noqa: BLE001
                             log.warning("dedupe_gs_pairs failed: %s", e)
+                        # A2 enrich-at-finalize: pull the soccerfixtures goal/
+                        # card timeline + ET/PEN scores for newly-finalised
+                        # matches into foot_match.gs_* so settle_graders can
+                        # auto-settle the A2 markets.  Idempotent + bounded;
+                        # failures never break finalisation.
+                        try:
+                            from . import goalserve_a2_enrich as _a2
+                            # CRITICAL: enrich does a SYNC urllib.urlopen to the
+                            # Goalserve soccerfixtures feed.  urlopen(timeout=)
+                            # does NOT cover getaddrinfo (DNS), so a DNS/connect
+                            # hang here used to FREEZE the event loop (caught via
+                            # py-spy: MainThread stuck in getaddrinfo under
+                            # _finalize_loop -> enrich_finished_a2 -> _gs_feed_get
+                            # -> urlopen), stalling /events + /health + WS.  Run
+                            # it in a thread so only a worker blocks, not the loop.
+                            await asyncio.to_thread(_a2.enrich_finished_a2)
+                        except Exception as e:  # noqa: BLE001
+                            log.warning("a2 enrich sweep failed: %s", e)
             except Exception as e:  # noqa: BLE001
                 log.warning("finalize loop error: %s", e)
             await asyncio.sleep(GS_WS_FINALIZE_INTERVAL)
@@ -587,9 +643,16 @@ class GoalserveInplayWS:
             pass
 
     # ---- message handlers ----
-    def _ingest_event_meta(self, ev: dict) -> "int | None":
+    def _ingest_event_meta(self, ev: dict, is_full: bool = False) -> "int | None":
         """Update / create per-event state from an avl entry or updt frame.
-        Returns the event id (int) on success."""
+        Returns the event id (int) on success.
+
+        ``is_full`` is True only for ``avl`` (full-snapshot) entries.  An
+        ``updt`` delta's ``cms`` is a *partial* recent-events list, so a goal
+        recount off it can under-count; a delta must never be allowed to
+        regress a per-side goal tally we've already recorded (this is the
+        0:2 -> 0:0 score flicker).  Full ``avl`` snapshots stay authoritative
+        and may correct a score down (e.g. a VAR-disallowed goal)."""
         if not isinstance(ev, dict):
             return None
         try:
@@ -599,6 +662,8 @@ class GoalserveInplayWS:
         st = self._state.setdefault(ev_id, {
             "id": ev_id, "odds_by_mid": {},
         })
+        _prev_t1 = st.get("t1_score")
+        _prev_t2 = st.get("t2_score")
         # team names + per-team scores.  t1/t2 may be {n: "..."} or a string.
         for src_key, name_dst, score_dst in (
             ("t1", "t1_n", "t1_score"), ("t2", "t2_n", "t2_score"),
@@ -655,6 +720,18 @@ class GoalserveInplayWS:
                     st["t2_score"] = int(g[1])
                 except (TypeError, ValueError):
                     pass
+        # Anti-regression guard: a partial `updt` delta (cms or t1/t2.score)
+        # must never drop a per-side goal tally below what we already have —
+        # otherwise a delta that omits earlier goals resets 0:2 to 0:0.  Only a
+        # full `avl` snapshot is allowed to lower the score.
+        if not is_full:
+            for _dst, _prev in (("t1_score", _prev_t1), ("t2_score", _prev_t2)):
+                _cur = st.get(_dst)
+                try:
+                    if _prev is not None and _cur is not None and int(_cur) < int(_prev):
+                        st[_dst] = _prev
+                except (TypeError, ValueError):
+                    pass
         # odds
         odds = ev.get("odds")
         if isinstance(odds, list):
@@ -692,12 +769,21 @@ class GoalserveInplayWS:
                 "id": ev_id,
                 "odds_by_mid": dict(prev.get("odds_by_mid") or {}),
             }
+            # Carry the last-known live score / clock / names forward so an
+            # `avl` entry that omits them doesn't blank the score to None —
+            # observed in prod as a 1:3 → (null → 0:0) → 1:3 flicker when a
+            # full-snapshot reseed dropped the score.  _ingest_event_meta()
+            # below still overwrites each field whenever this avl carries it.
+            for _k in ("t1_score", "t2_score", "t1_n", "t2_n", "et", "stp"):
+                _pv = prev.get(_k)
+                if _pv is not None:
+                    new_state[ev_id][_k] = _pv
         # swap
         self._state = new_state
         # fill metadata + odds via the same path
         n = 0
         for ev in evts:
-            ev_id = self._ingest_event_meta(ev)
+            ev_id = self._ingest_event_meta(ev, is_full=True)
             if ev_id is not None:
                 self._dirty.add(ev_id)
                 n += 1

@@ -3,7 +3,10 @@ include_once "./include/config.php";
 //启动session的初始化
 session_start();
 $_p = $_POST;
-if(empty($_p["p"])) error_400();
+if(empty($_p["p"])){
+    @error_log(date("Y-m-d H:i:s")." [d0_404] empty-p uri=".($_SERVER["REQUEST_URI"]??"-")." ref=".($_SERVER["HTTP_REFERER"]??"-")." ip=".($_SERVER["REMOTE_ADDR"]??"-")." keys=".implode(",",array_keys($_p))."\n", 3, ROOT_PATH."/_d0_404_debug.log");
+    error_400();
+}
 define("_POST_",serialize($_p));
 $langx = empty($_p["langx"]) ? "zh-cn" : $_p["langx"];
 //通过参数"p"追踪目录
@@ -45,6 +48,7 @@ if($isPhpFiles){
     include_once $dir."/".$filesName;
     exit;
 }else{
+    @error_log(date("Y-m-d H:i:s")." [d0_404] unresolved p=".$_p["p"]." dir=".$dir." dirHtml=".$dirHtml." uri=".($_SERVER["REQUEST_URI"]??"-")." ref=".($_SERVER["HTTP_REFERER"]??"-")." ip=".($_SERVER["REMOTE_ADDR"]??"-")." keys=".implode(",",array_keys($_p))."\n", 3, ROOT_PATH."/_d0_404_debug.log");
     error_400();
 }
 

@@ -1823,7 +1823,7 @@ class OverView extends Base
                                 $team_h_ratio = getXmlNode($xml, "team_h_ratio");
                                 $team_c_ratio = getXmlNode($xml, "team_c_ratio");
                                 $score = getXmlNode($xml, "score");
-                                $ioratio = getXmlNode($xml, "ioratio");
+                                $ioratio = $this->toHkOdds(getXmlNode($xml, "ioratio"));
                                 $result = getXmlNode($xml, "result");
                                 $spread = "";
                                 if ($ut->checkWtypeIsOU($v["wtype"]) || $v["wtype"] == "W3") {//大小、3项让球
@@ -2415,6 +2415,99 @@ class OverView extends Base
     }
 
     /**
+     * 英文队名/联赛名 → 简体中文(取 db_sports.name_cn_cache, 与 H5 前台同源)。
+     * 外接赛事(世界杯/外围盘)注单的队名/联赛名以英文存库, 旧版后台直接显示英文。
+     * 已是中文(不含英文字母)或查无结果时原样返回; 请求内静态缓存避免重复查询。
+     */
+    private function nameToCn($s){
+        static $cache = [];
+        $s = (string)$s;
+        if($s === "") return $s;
+        if(!preg_match('/[A-Za-z]/', $s)) return $s; // 已是中文/无需翻译
+        if(array_key_exists($s,$cache)) return $cache[$s];
+        $cn = "";
+        try{
+            $row = $this->dbs->select("SELECT `name_cn` FROM `name_cn_cache` WHERE `name_en`='".addslashes($s)."' LIMIT 1","Row");
+            if($row && !empty($row["name_cn"])) $cn = $row["name_cn"];
+        }catch(\Exception $e){ $cn = ""; }
+        $out = ($cn !== "") ? $cn : $s;
+        $cache[$s] = $out;
+        return $out;
+    }
+
+    /**
+     * 外接盘口(api_v2 下注的世界杯/外围赛事)在旧版 d0/代理后台的玩法名称与选项修正。
+     * 旧系统 CS="零失球", 但新功能用 CS 表示"正确比分"(rtype 存比分如 4:4); BTS/ML/DC/DNB/
+     * SP/OU/OE 等也存在语义差异或旧版 FT 未涵盖。仅当 rtype 命中新功能编码时才覆盖, 旧注单不受影响。
+     * @return array|null  ['name'=>玩法中文, 'result'=>选项中文] 或 null(不覆盖)
+     */
+    private function extMarketCn($wtype,$rtype,$spread,$team_h,$team_c,$betstr=""){
+        $wt = strtoupper((string)$wtype);
+        $rt = strtoupper(trim((string)$rtype));
+        $sp = ($spread !== null && $spread !== "") ? (string)$spread : "";
+        $side = function($r) use ($team_h,$team_c){
+            if($r==="H") return $team_h;
+            if($r==="C") return $team_c;
+            if($r==="D") return "和局";
+            return "";
+        };
+        $isScore = (bool)preg_match('/^\d+\s*[:\-]\s*\d+$/', $rt);
+        $score = str_replace(["-"," "], [":",""], $rt);
+        switch($wt){
+            case "CS":
+                if(!$isScore) return null;
+                return ["name"=>"正确比分","result"=>$score];
+            case "HT_CS":
+                if(!$isScore) return null;
+                return ["name"=>"上半场正确比分","result"=>$score];
+            case "BTS":
+                if($rt!=="Y" && $rt!=="N") return null;
+                return ["name"=>"双方进球","result"=>($rt==="Y"?"是":"否")];
+            case "HT_BTS":
+                if($rt!=="Y" && $rt!=="N") return null;
+                return ["name"=>"上半场双方进球","result"=>($rt==="Y"?"是":"否")];
+            case "ML":
+                if(!in_array($rt,["H","C","D"],true)) return null;
+                return ["name"=>"独赢","result"=>$side($rt)];
+            case "HT_ML":
+                if(!in_array($rt,["H","C","D"],true)) return null;
+                return ["name"=>"半场独赢","result"=>$side($rt)];
+            case "DNB":
+                if(!in_array($rt,["H","C"],true)) return null;
+                return ["name"=>"和局退款","result"=>$side($rt)];
+            case "DC":
+                $dc=["HD"=>$team_h." / 和局","CD"=>$team_c." / 和局","HC"=>$team_h." / ".$team_c];
+                if(!isset($dc[$rt])) return null;
+                return ["name"=>"双重机会","result"=>$dc[$rt]];
+            case "SP":
+                if(!in_array($rt,["H","C"],true)) return null;
+                // 显示「剩余赛事」让球线: 取下注时冻结在 betstr 的尾部让球数(让0 / +x / -x);
+                // 取不到时回退到全场 spread。结算仍用 spread 全场线, 不受影响。
+                $spShow = $sp;
+                if(is_string($betstr) && $betstr !== "" && preg_match('/(让0|[+\-][0-9.]+)\s*$/u',$betstr,$bm)){
+                    $spShow = $bm[1];
+                }
+                return ["name"=>"让球","result"=>trim($side($rt)." ".$spShow)];
+            case "HT_SP":
+                if(!in_array($rt,["H","C"],true)) return null;
+                return ["name"=>"上半场让球","result"=>trim($side($rt)." ".$sp)];
+            case "OU":
+                if(!in_array($rt,["OVER","UNDER"],true)) return null;
+                return ["name"=>"大小","result"=>trim(($rt==="OVER"?"大":"小")." ".$sp)];
+            case "HT_OU":
+                if(!in_array($rt,["OVER","UNDER"],true)) return null;
+                return ["name"=>"上半场大小","result"=>trim(($rt==="OVER"?"大":"小")." ".$sp)];
+            case "OE":
+                if(!in_array($rt,["ODD","EVEN"],true)) return null;
+                return ["name"=>"单双","result"=>($rt==="ODD"?"单":"双")];
+            case "CORNERS":
+                if(!in_array($rt,["OVER","UNDER"],true)) return null;
+                return ["name"=>"角球大小","result"=>trim(($rt==="OVER"?"大":"小")." ".$sp)];
+        }
+        return null;
+    }
+
+    /**
      * 注单处理
      * @param $v
      * @param $wagers
@@ -2423,6 +2516,19 @@ class OverView extends Base
      * @param string $isAD Y:后台显示 N:前台显示
      * @return string
      */
+    /**
+     * 显示层：欧洲小数赔率 → 香港(亚洲)赔率 = 小数 − 1。
+     * 仅用于后台面板展示；bet.ioratio 存储值与 common/Result.php、settle_bets.php
+     * 结算公式一律保持欧洲小数赔率不变，故派彩金额完全不受影响。
+     * 非数值或 ≤1 的值原样返回（避免对空值/特殊行做错误换算）。
+     */
+    private function toHkOdds($v){
+        if (!is_numeric($v)) return $v;
+        $d = (float)$v;
+        if ($d <= 1.0) return $v;
+        return number_format($d - 1, 2, '.', '');
+    }
+
     public function get_bet_wagers($v,$wagers,$isResult="N",$p_wtype='',$isAD="N"){
         global $ls_game_ary,$ls_account_ary;
         $cs = "";
@@ -2451,9 +2557,9 @@ class OverView extends Base
         $ms_name = "";
 
 
-        $league = $v["league{$cs}"];
-        $team_h = $v["team_h{$cs}"];
-        $team_c = $v["team_c{$cs}"];
+        $league = $this->nameToCn(($v["league{$cs}"] !== null && $v["league{$cs}"] !== "") ? $v["league{$cs}"] : $v["league"]);
+        $team_h = $this->nameToCn(($v["team_h{$cs}"] !== null && $v["team_h{$cs}"] !== "") ? $v["team_h{$cs}"] : $v["team_h"]);
+        $team_c = $this->nameToCn(($v["team_c{$cs}"] !== null && $v["team_c{$cs}"] !== "") ? $v["team_c{$cs}"] : $v["team_c"]);
         if($gtype != "FT"){
             $msAry = explode("-",$team_h);
             if(isset($msAry[1])){
@@ -2588,6 +2694,13 @@ $strong = strtoupper($v["strong"]);
             $wagers["SPREAD_NAME"] = $spread_name;
         }
 
+        // 外接盘口玩法名称/选项修正(世界杯等 api_v2 注单)。$_wtype 为原始 wtype(SP 在上方可能已被改写)。
+        $extM = $this->extMarketCn($_wtype,$rtype,$spread,$team_h,$team_c,$v["betstr"] ?? "");
+        if($extM !== null){
+            $wtype_name = $extM["name"];
+            if($extM["result"] !== ""){ $result = $extM["result"]; }
+        }
+
 
 
         $ball_act_class = "";
@@ -2638,7 +2751,7 @@ $strong = strtoupper($v["strong"]);
             $wagers["SCORE"] = $score;
             $wagers["RESULT"] = $result;
             $wagers["PNAME"] = $ptype;
-            $wagers["IORATIO"] = $v["ioratio"];
+            $wagers["IORATIO"] = $this->toHkOdds($v["ioratio"]);
             $wagers["P_WTYPE"]= $_wtype;
             $wagers["P_BALL_ACT_CLASS"] = $ball_act_class;
             $wagers["P_BALL_ACT_RET"] = $ball_act_ret;
@@ -2669,7 +2782,7 @@ $strong = strtoupper($v["strong"]);
             $wagers["SCORE"] = "";
             $wagers["RESULT"] = $result;
             $wagers["PNAME"] = "";
-            $wagers["IORATIO"] = $v["ioratio"];
+            $wagers["IORATIO"] = $this->toHkOdds($v["ioratio"]);
             $wagers["BALL_ACT_CLASS"] = "";
             $wagers["BALL_ACT_RET"] = "";
         }else{
@@ -2718,8 +2831,8 @@ $strong = strtoupper($v["strong"]);
             $wagers["RESULT"] = $result;
             $wagers["PNAME"] = $ptype;
             
-    // 将整数转换为字符串并拼接上 .00  
-    $wagers["IORATIO"] = number_format($v["ioratio"], 2, '.', '');
+    // 显示为香港(亚洲)赔率 = 小数 − 1（存储/结算仍为小数，派彩不变）
+    $wagers["IORATIO"] = $this->toHkOdds($v["ioratio"]);
  
 
 	
@@ -3540,7 +3653,7 @@ $strong = strtoupper($v["strong"]);
                 $team_h_ratio = getXmlNode($xml, "team_h_ratio");
                 $team_c_ratio = getXmlNode($xml, "team_c_ratio");
                 $score = getXmlNode($xml, "score");
-                $ioratio = getXmlNode($xml, "ioratio");
+                $ioratio = $this->toHkOdds(getXmlNode($xml, "ioratio"));
                 $result = getXmlNode($xml, "result");
                 $spread = "";
                 if ($ut->checkWtypeIsOU($v["wtype"]) || $v["wtype"] == "W3") {//大小、3项让球
@@ -3871,7 +3984,7 @@ $strong = strtoupper($v["strong"]);
                             $team_h_ratio = getXmlNode($xml, "team_h_ratio");
                             $team_c_ratio = getXmlNode($xml, "team_c_ratio");
                             $score = getXmlNode($xml, "score");
-                            $ioratio = getXmlNode($xml, "ioratio");
+                            $ioratio = $this->toHkOdds(getXmlNode($xml, "ioratio"));
                             $result = getXmlNode($xml, "result");
                             $spread = "";
                             $strong = "N";

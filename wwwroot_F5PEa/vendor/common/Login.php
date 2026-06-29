@@ -479,10 +479,8 @@ class Login extends Base
                 if($this->login_layer == Constant::MEM){
                     $this->arr["msg"] = 104;
                     $this->arr["passwd_safe"] = $rs["name"];
-                } else {
-                    $this->arr[$this->status_code] = "4O002";
+                    return $this->arr;
                 }
-                return $this->arr;
             }
         }
 

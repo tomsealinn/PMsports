@@ -6,7 +6,8 @@ $userArr = $cc->getUID();//uid验证
 if($userArr["status"]=="error"){exit(json_encode($userArr));}
 $nid = $userArr["sup"]["nid"];
 $table = Constant::T_RANK;
-$rs = $db_c->select("SELECT `dfwinloss`,`winloss` FROM {$table} WHERE `id`={$_p["user_id"]}  AND `nid` LIKE '{$nid}%'","Row");
+$user_id = intval($_p["user_id"]);
+$rs = $db_c->select("SELECT `dfwinloss`,`winloss` FROM {$table} WHERE `id`={$user_id}  AND `nid` LIKE '{$nid}%'","Row");
 $para = [
     "account" => $cc->get_ag_list(),
     "dfwinloss" => $rs["dfwinloss"],

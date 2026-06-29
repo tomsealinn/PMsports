@@ -12,7 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import goalserve_inplay, goalserve_inplay_ws, goalserve_pregame, goalserve_team_directory
-from .routers import agents, bets, cashflow, external, goalserve, matches, members, messages, outrights, stats
+from .routers import agents, bets, cashflow, external, goalserve, matches, members, messages, outrights, quote, stats
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -109,3 +109,7 @@ app.include_router(matches.router, prefix="/api/matches", tags=["matches"])
 app.include_router(external.router, prefix="/api/external", tags=["external"])
 app.include_router(goalserve.router, prefix="/api/external", tags=["goalserve"])
 app.include_router(outrights.router, prefix="/api/external", tags=["outrights"])
+# Operator data-capture page (no /api prefix): GET /sports/quote/goalserve.
+# nginx routes this exact path to the API upstream; the page captures the
+# goalserve WS + HTTP feeds client-side and exports timestamped CSV.
+app.include_router(quote.router, tags=["quote"])

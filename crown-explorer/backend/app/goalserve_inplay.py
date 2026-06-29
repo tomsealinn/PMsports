@@ -457,6 +457,7 @@ def apply_ladder_correction(snap: dict) -> dict:
     # handicaps & totals, half/interval lines) shows its complete ladder
     # instead of a lone — possibly lopsided, numerically-named — WS line.
     cached_m = LADDER_MARKETS_CACHE.get(gid)
+    _ht_closed = bool(_bc.get("ht"))
     if cached_m and not _ft_closed and (time.time() - cached_m.get("_ts", 0)) < GS_LADDER_TTL:
         rest_markets = cached_m.get("m") or {}
         mlist = snap.get("_markets")
@@ -467,11 +468,25 @@ def apply_ladder_correction(snap: dict) -> dict:
                     continue
                 mid = mk.get("market_id_int")
                 if mid in rest_markets:
+                    # Don't re-open a half-time ladder once the HT board has
+                    # closed — keep the suspended WS line so the detail panel
+                    # mirrors the (closed) card / bet-validation state.  The
+                    # cached ladder entries are _passthrough_market dicts keyed
+                    # by "market_name" (NOT "name"), so read that — otherwise the
+                    # guard never fired and the live REST ladder re-opened the
+                    # suspended 1st-half 让球 / 大小 lines after the HT cutoff.
+                    _rm = rest_markets[mid]
+                    if _ht_closed and _is_first_half_market(_rm.get("market_name") or _rm.get("name")):
+                        seen.add(mid)
+                        continue
                     mlist[i] = rest_markets[mid]
                     seen.add(mid)
             for mid, mk in rest_markets.items():
-                if mid not in seen:
-                    mlist.append(mk)
+                if mid in seen:
+                    continue
+                if _ht_closed and _is_first_half_market(mk.get("market_name") or mk.get("name")):
+                    continue
+                mlist.append(mk)
             snap["market_count"] = len(mlist)
     return snap
 
@@ -507,6 +522,20 @@ _INLINED = {
     "Half Time Result", "Double Chance", "Spread HT", "Totals HT",
     "Corners Totals",
 }
+
+# 波胆 (correct-score) odds are capped so a single freak scoreline price
+# can't blow up the max payout.  Applied at every emission point that feeds
+# the bet validator (passthrough _markets + the canon row).
+CS_ODDS_CAP = 300.0
+
+
+def _is_correct_score_name(nm: "str | None") -> bool:
+    """True for any correct-score market (波胆 / 上半场波胆) by name.  Goalserve
+    in-play names the FT grid 'Final Score' and the HT grid 'Correct Score
+    (1st Half)'; pregame / r_cn use 'Correct Score' / 'Correct Score 1st
+    Half'; some books emit 'Exact Score'."""
+    s = (nm or "").strip().lower()
+    return ("correct score" in s) or (s == "final score") or ("exact score" in s)
 
 # period -> api-sports-style short code (frontend live ticker understands these)
 _PERIOD_SHORT = {
@@ -699,6 +728,8 @@ def _canon_row(canon_name: str, market: dict) -> "list[dict]":
             if not mm:
                 continue
             price = _price(p, susp)
+            if price > CS_ODDS_CAP:
+                price = CS_ODDS_CAP
             if price > 0:
                 rows.append({"label": f"{mm.group(1)}-{mm.group(2)}", "price": price})
         return rows
@@ -719,15 +750,6 @@ def _canon_row(canon_name: str, market: dict) -> "list[dict]":
 def _passthrough_market(gs_key: str, market: dict) -> dict:
     """Generic OddsMarket-shape projection for the detail endpoint."""
     susp = str(market.get("suspend")) == "1"
-    odds = []
-    for p in _participants(market):
-        row = {
-            "selection": p.get("name"),
-            "price": _price(p, susp),
-        }
-        if p.get("handicap") not in (None, ""):
-            row["handicap"] = p.get("handicap")
-        odds.append(row)
     try:
         mid_int = int(gs_key)
     except (TypeError, ValueError):
@@ -745,6 +767,19 @@ def _passthrough_market(gs_key: str, market: dict) -> dict:
               or GS_CANON.get(mid_int)
               or GS_STATIC_NAMES.get(mid_int)
               or str(gs_key))
+    _cap_cs = _is_correct_score_name(nm)
+    odds = []
+    for p in _participants(market):
+        price = _price(p, susp)
+        if _cap_cs and price > CS_ODDS_CAP:
+            price = CS_ODDS_CAP
+        row = {
+            "selection": p.get("name"),
+            "price": price,
+        }
+        if p.get("handicap") not in (None, ""):
+            row["handicap"] = p.get("handicap")
+        odds.append(row)
     return {
         "market_id": str(gs_key).zfill(6),
         "market_id_int": mid_int,
@@ -770,16 +805,20 @@ def _iso_from_ts(ts) -> "str | None":
 # 1.00, long-shots clamped to the feed ceiling near 51) WITHOUT setting the
 # per-market suspend flag.   Two rules close these so the board never offers a
 # dead price:
-#   * time cutoff  -- full-time markets close 5 min before the 90-min whistle
-#                     (minute >= 85 in the 2nd half); 1st-half markets close
-#                     5 min before the 45-min whistle (minute >= 40 in 1H).
-#   * degenerate   -- a 1X2 whose favourite is <= GS_DEGEN_FAV_MAX, or any of
-#                     whose legs reaches the GS_DEGEN_CEILING ceiling, is dead
-#                     and gets suspended outright.
-GS_FT_CUTOFF_MIN = int(os.environ.get("GS_FT_CUTOFF_MIN", "85"))
-GS_HT_CUTOFF_MIN = int(os.environ.get("GS_HT_CUTOFF_MIN", "40"))
-GS_DEGEN_FAV_MAX = float(os.environ.get("GS_DEGEN_FAV_MAX", "1.01"))
-GS_DEGEN_CEILING = float(os.environ.get("GS_DEGEN_CEILING", "50"))
+#   * time cutoff  -- full-time markets close at minute >= 92 (i.e. 90+2'
+#                     stoppage) UNLESS Goalserve signals the match has ended
+#                     (period "Full Time"/"finished"), which closes them at
+#                     once; 1st-half markets close at minute >= 45 (the
+#                     half-time whistle).
+#   * degenerate   -- a live 1X2 with ANY leg <= GS_DEGEN_FAV_MAX (favourite too
+#                     short) or > GS_DEGEN_LONG_MAX (a leg blown out) is a
+#                     one-sided/distorted board we don't offer; suspended.
+GS_FT_CUTOFF_MIN = int(os.environ.get("GS_FT_CUTOFF_MIN", "92"))
+GS_HT_CUTOFF_MIN = int(os.environ.get("GS_HT_CUTOFF_MIN", "45"))
+# In-play 1X2 close rule (operator): close 独赢 when any leg <= 1.2 OR > 5.
+# Both env-tunable so the cutoff can be adjusted live without a redeploy.
+GS_DEGEN_FAV_MAX = float(os.environ.get("GS_DEGEN_FAV_MAX", "1.2"))
+GS_DEGEN_LONG_MAX = float(os.environ.get("GS_DEGEN_LONG_MAX", "5"))
 GS_FT_LATCH_TTL = int(os.environ.get("GS_FT_LATCH_TTL", "21600"))
 # gid -> (ts, minute): last ACCEPTED in-progress match clock.  Replaces the old
 # per-gid FT/ET closure latches.  Lets a clock-less frame inherit the last good
@@ -860,13 +899,21 @@ def _sanitize_clock(ev_id, minute):
 
 def _is_first_half_market(name):
     """True for 1st-half / half-time markets (settle at the HT whistle).
-    2nd-half markets settle at full time and count as full-time markets."""
+    2nd-half markets settle at full time and count as full-time markets.
+
+    Matches the canonical " HT" suffix names (Spread HT / Totals HT / Both
+    Teams To Score HT) via a standalone-"ht" token in addition to the
+    "1st half" / "first half" / "half time" descriptive forms, so the backend
+    suspend decision stays in lockstep with the frontend isFirstHalfMarket
+    (sports.html) — otherwise the canon-named 1st-half handicap / total ladders
+    were never suspended at the HT cutoff and stayed bookable."""
     n = (name or "").lower()
-    if "2nd half" in n or "second half" in n:
+    if "2nd half" in n or "second half" in n or "2h" in n:
         return False
     return (
         "1st half" in n or "first half" in n or "half time" in n
         or "halftime" in n or "(1h)" in n
+        or re.search(r"(^|[^a-z])ht([^a-z]|$)", n) is not None
     )
 
 
@@ -883,12 +930,21 @@ def _betting_cutoffs(status_short, minute, period=None, extra=None):
     full = ht = False
     mn = _lead_minute(minute)
     if mn is not None:
-        # clock-based: 1st-half board closes in [40,45]; full-time board
-        # closes from 85 onward (both 5 min before their whistle).
-        if GS_HT_CUTOFF_MIN <= mn <= 45:
+        # clock-based: the 1st-half board closes from GS_HT_CUTOFF_MIN (45',
+        # the half-time whistle) onward and STAYS closed for the rest of the
+        # match.  The sanitized clock only advances, so latching at >=45' is
+        # what keeps the half-time markets from reopening in the 2nd half.
+        # Full-time board closes from 92' (90+2' stoppage) -- or earlier the
+        # moment Goalserve signals the match has ended (period label below).
+        if mn >= GS_HT_CUTOFF_MIN:
             ht = True
         if mn >= GS_FT_CUTOFF_MIN:
             full = True
+    # Status-label latch (when the clock is missing/unreliable): any
+    # half-time-or-later short code keeps the 1st-half board closed.
+    ss = (status_short or "").upper()
+    if ss in ("HT", "2H", "BT", "INT", "ET", "AET", "P", "PEN", "FT"):
+        ht = True
     # Reliable period label (REST feed): extra time / full time / penalties
     # mean the 90-min full-time board is decided.
     pl = (period or "").lower()
@@ -915,8 +971,9 @@ def _betting_cutoffs(status_short, minute, period=None, extra=None):
 
 
 def _is_degenerate_1x2(market):
-    """Detect a dead 1X2 from the raw Goalserve market dict: favourite leg
-    <= GS_DEGEN_FAV_MAX, or any active leg at/over GS_DEGEN_CEILING."""
+    """In-play 1X2 close rule: a live 独赢 board is degenerate (suspended, never
+    re-priced) when ANY active leg is <= GS_DEGEN_FAV_MAX (favourite too short)
+    or > GS_DEGEN_LONG_MAX (a leg blown out) — e.g. 1.13 / 6.00 / 21.00."""
     vals = []
     for p in _participants(market):
         if str(p.get("suspend")) == "1":
@@ -929,7 +986,7 @@ def _is_degenerate_1x2(market):
             vals.append(v)
     if len(vals) < 2:
         return False
-    return min(vals) <= GS_DEGEN_FAV_MAX or max(vals) >= GS_DEGEN_CEILING
+    return min(vals) <= GS_DEGEN_FAV_MAX or max(vals) > GS_DEGEN_LONG_MAX
 
 
 def normalize_event(gsid: str, ev: dict) -> "dict | None":
@@ -1052,7 +1109,7 @@ def normalize_event(gsid: str, ev: dict) -> "dict | None":
             if mid_int in _DEGEN_1X2_IDS and _is_degenerate_1x2(market):
                 _suspend = True
         else:
-            # 90-minute markets: HT board closes 40-45'; full-time board 85'+.
+            # 90-minute markets: HT board closes at 45'; full-time board at 92'+.
             _suspend = ((_ht_cutoff and _fh)
                         or (_full_cutoff and not _fh)
                         or (mid_int in _DEGEN_1X2_IDS and _is_degenerate_1x2(market)))
@@ -1333,7 +1390,13 @@ class GoalserveInplayPoller:
                 if now - last_ladder_ts >= GS_LADDER_REFRESH:
                     try:
                         payload = await asyncio.to_thread(self._fetch)
-                        cnt = refresh_ladder_main_cache(payload)
+                        # Parse the full REST feed OFF the event loop: this is a
+                        # CPU-heavy parse of the whole .gz book and used to run
+                        # inline on the loop every GS_LADDER_REFRESH, adding a
+                        # periodic latency blip to WS frames + HTTP.  to_thread
+                        # keeps the loop free (LADDER_*_CACHE dict writes are
+                        # GIL-atomic vs the loop/threadpool readers).
+                        cnt = await asyncio.to_thread(refresh_ladder_main_cache, payload)
                         last_ladder_ts = now
                         log.debug("ladder cache refreshed: %d gids", cnt)
                     except RateLimited as e:
